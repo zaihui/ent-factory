@@ -23,7 +23,7 @@ Simplify the process of creating mock model objects for ent schema.
 ## How to install
 ### Install
 ```bash
-go install github.com/zaihui/ent-factory 
+go install github.com/zaihui/ent-factory@latest
 ```
 ### Setup
 #### Flags
@@ -52,7 +52,12 @@ go install github.com/zaihui/ent-factory
 #### Makefile Command
 ```bash
 all_factory:
-  go run ent-factory generate --schemaPath {your ent schema path} --outputPath {path of your factories}
+  go run ent-factory generate --schemaPath {your ent schema path} --outputPath {path of your factories} ----projectPath {your project module path}
+```
+Sample 
+```bash
+all_factory:
+  go run ent-factory generate --schemaPath gen/entschema --outputPath  /Users/lvxinyan/zaihui/ent-factory/factories --projectPath github.com/zaihui/ent-factory
 ```
 
 ## Sample
