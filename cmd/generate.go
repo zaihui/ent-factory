@@ -632,7 +632,7 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 			IndentString = IndentString + ".\n\tSet" + withFirstCharUpper(fieldName.Name) + "(data." + fieldName.Name + ")"
 		}
 	}
-	IndentString = "Create()" + IndentString + ".SaveX(s.Context())"
+	IndentString = "Create()" + IndentString + ".\n\tSaveX(s.Context())"
 	res := ast.SelectorExpr{
 		X:   returnIndent,
 		Sel: ast.NewIdent(IndentString),
