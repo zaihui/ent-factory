@@ -1,11 +1,20 @@
 # Ent Factory
-a golang factory library for ent.
+A Golang Factory Library For Ent.
 
 ## Function
 Simplify the process of creating mock model objects for ent schema. 
 - Auto reading the struct of ent model schemas to create factory functions.
 - Auto fake data for each field as default.
 - Allow self define the value of any field independently.
+
+## Todo
+- [X] Auto Format Code
+- [ ] Support Time Optional Function
+- [ ] Support Json Field Optional Function
+- [ ] Code Lint
+- [ ] Unit Test Coverage
+- [ ] Version Compatibility Test
+- [ ] Option param to control overwrite exist factory or not
 
 ## Struct
 ```
@@ -50,6 +59,8 @@ go install github.com/zaihui/ent-factory@latest
   - the name of ent client, means `appPath.entClientName`
   - the default value is `EntClient`
 #### Makefile Command
+> CAUTION!: This Command will regenerate every factory based on the current struct of table. 
+So, if you do some customize works, they may be lost.
 ```bash
 all_factory:
   go run ent-factory generate --schemaPath {your ent schema path} --outputPath {path of your factories} ----projectPath {your project module path}
@@ -111,7 +122,7 @@ func New(s factories.TestSuite, opts ...BookTableOrderFieldSetter) *entschema.Bo
 		SaveX(s.Context())
 }
 ```
-### how to use this factory
+### How to use this factory
 ```go
 package main
 import (
@@ -123,9 +134,8 @@ booktableorderfactory.new(s)
 booktableorderfactory.new(s, booktableorderfactory.SetUID("your uid"))
 ```
 
-## Todo
-- [ ] Support Time Optional Function
-- [ ] Support Json Field Optional Function
-- [ ] Lint
-- [ ] Unit Test Coverage
-- [ ] Version Compatibility Test
+## Special Thank
+Special Thanks splunk. The part of codegen about function optional pattern is based on this [project](https://github.com/splunk/go-generate-builder-opts) from splunk.
+
+I edit some logic of it to implement my need, so I haven't imported it as a package to use it.
+
