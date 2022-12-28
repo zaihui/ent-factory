@@ -266,7 +266,6 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 		return nil, err
 	}
 	return res, nil
-	//return out, nil
 }
 
 func WithFuncNew(astOut *ast.File,
