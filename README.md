@@ -1,5 +1,5 @@
 # Ent Factory
-A Golang Factory Library For Ent.
+A Golang Factory Code Generation Command Tool For Ent.
 
 ## Function
 Simplify the process of creating mock model objects for ent schema. 
