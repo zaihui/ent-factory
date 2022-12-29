@@ -3,20 +3,20 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/zaihui/ent-factory/constants"
 	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/spf13/cobra"
+	"github.com/zaihui/ent-factory/constants"
 )
 
 func init() {
@@ -28,9 +28,12 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
+//nolint:funlen,gocognit,cyclop // fix it later
 func GenerateFactories(cmd *cobra.Command, _ []string) {
-	// todo 4. format code automatically
 	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, err := ExtraFlags(cmd)
+	if err != nil {
+		fail(err.Error())
+	}
 
 	if schemaFile == "" && schemaPath == "" {
 		Fatalf("schema file and schema path must give at lease one")
@@ -40,58 +43,25 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 	}
 	f, err := os.Open(schemaPath)
 	if err != nil {
-		fmt.Println(err)
-		return
+		fail(err.Error())
 	}
-	const perm = 0o777
+
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-
+			fail(err.Error())
 		}
 	}(f)
 	files, err := f.Readdir(0)
 	if err != nil {
-		fmt.Println(err)
-		return
+		fail(err.Error())
 	}
 	ignorePath := []string{"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime"}
 	commonPath := fmt.Sprintf("%s/common.go", outputPath)
 	_, err = os.Stat(commonPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err2 := os.MkdirAll(filepath.Dir(commonPath), perm)
-			if err2 != nil {
-				fail(err2.Error())
-			}
-			endPoints := strings.Split(outputPath, "/")
-			packageName := endPoints[len(endPoints)-1]
-			code := fmt.Sprintf(`package %s 
-
-                     import "context"
-
-                     type TestSuite interface {
-	                      NoError(err error, msgAndArgs ...interface{}) bool
-	                      Context() context.Context
-                     }`, packageName)
-			formattedCode, err := format.Source([]byte(code))
-			if err != nil {
-				fail(err.Error())
-			}
-			fc, err := os.OpenFile(fmt.Sprintf("%s/common.go", outputPath), os.O_RDWR|os.O_CREATE, perm)
-			if err != nil {
-				fail(err.Error())
-			}
-			defer func(fc *os.File) {
-				err := fc.Close()
-				if err != nil {
-
-				}
-			}(fc)
-			_, err = fmt.Fprint(fc, string(formattedCode))
-			if err != nil {
-				fail(err.Error())
-			}
+			CreatePathAndCommonFile(commonPath, outputPath)
 		} else {
 			fail(err.Error())
 		}
@@ -117,28 +87,63 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 			fail(err.Error())
 		}
 		var dest io.Writer
+		//nolint:nestif // need it
 		if outputPath == "" {
 			dest = os.Stdout
 		} else {
 			_, err := os.Stat(filepath.Dir(realOutPutPath))
 			if os.IsNotExist(err) {
-				err2 := os.MkdirAll(filepath.Dir(realOutPutPath), perm)
+				err2 := os.MkdirAll(filepath.Dir(realOutPutPath), os.FileMode(constants.Perm))
 				if err2 != nil {
 					fail(err2.Error())
 				}
 			} else if err != nil {
 				fail(err.Error())
 			}
-			dest, err = os.OpenFile(realOutPutPath, os.O_RDWR|os.O_CREATE, perm)
+			dest, err = os.OpenFile(realOutPutPath, os.O_RDWR|os.O_CREATE, os.FileMode(constants.Perm))
 			if err != nil {
 				fail(err.Error())
 			}
 		}
 
 		if _, err := io.Copy(dest, outReader); err != nil {
-			fmt.Println(err.Error())
 			fail(err.Error())
 		}
+	}
+}
+
+func CreatePathAndCommonFile(commonPath string, outputPath string) {
+	err := os.MkdirAll(filepath.Dir(commonPath), os.FileMode(constants.Perm))
+	if err != nil {
+		fail(err.Error())
+	}
+	endPoints := strings.Split(outputPath, "/")
+	packageName := endPoints[len(endPoints)-1]
+	code := fmt.Sprintf(`package %s 
+
+                     import "context"
+
+                     type TestSuite interface {
+	                      NoError(err error, msgAndArgs ...interface{}) bool
+	                      Context() context.Context
+                     }`, packageName)
+	formattedCode, err := format.Source([]byte(code))
+	if err != nil {
+		fail(err.Error())
+	}
+	fc, err := os.OpenFile(fmt.Sprintf("%s/common.go", outputPath), os.O_RDWR|os.O_CREATE, os.FileMode(constants.Perm))
+	if err != nil {
+		fail(err.Error())
+	}
+	defer func(fc *os.File) {
+		err := fc.Close()
+		if err != nil {
+			fail(err.Error())
+		}
+	}(fc)
+	_, err = fmt.Fprint(fc, string(formattedCode))
+	if err != nil {
+		fail(err.Error())
 	}
 }
 
@@ -197,8 +202,10 @@ func fail(msg string) {
 	os.Exit(1)
 }
 
-// RunGenerate ===== generate one factory schema =======
-func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesPath, appPath, entClientName string) (io.Reader, error) {
+// RunGenerate ===== generate one factory schema =======.
+func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesPath, appPath, entClientName string) (
+	io.Reader, error,
+) {
 	// Read input file
 	fset := token.NewFileSet()
 	astF, err := parser.ParseFile(fset, schemaFile, nil, 0)
@@ -687,7 +694,7 @@ func withFirstCharUpper(s string) string {
 }
 
 func formatCode(buf *bytes.Buffer) (*bytes.Buffer, error) {
-	code, err := ioutil.ReadAll(buf)
+	code, err := io.ReadAll(buf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read code from buffer: %w", err)
 	}

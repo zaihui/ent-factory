@@ -8,10 +8,11 @@ Simplify the process of creating mock model objects for ent schema.
 - Allow self define the value of any field independently.
 
 ## Todo
-- [X] Auto Format Code
+- [X] ~~Auto Format Code~~
 - [ ] Support Time Optional Function
 - [ ] Support Json Field Optional Function
-- [ ] Code Lint
+- [X] ~~Code Lint~~
+- [ ] CI Add Auto Lint
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
 - [ ] Option param to control overwrite exist factory or not

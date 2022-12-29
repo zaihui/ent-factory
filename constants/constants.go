@@ -7,4 +7,5 @@ var (
 	SuiteNoErrorFunc   = "NoError" // error check func for suite case
 	FactoryNewFuncName = "New"
 	SkipStructFields   = map[string]struct{}{"Edges": {}}
+	Perm               = 0o777
 )
