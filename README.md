@@ -12,7 +12,7 @@ Simplify the process of creating mock model objects for ent schema.
 - [ ] Support Time Optional Function
 - [ ] Support Json Field Optional Function
 - [X] ~~Code Lint~~
-- [ ] CI Add Auto Lint
+- [X] ~~CI Add Auto Lint~~
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
 - [ ] Option param to control overwrite exist factory or not
