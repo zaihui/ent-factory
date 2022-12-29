@@ -1,0 +1,199 @@
+run:
+  # timeout for analysis,
+  timeout: 7m
+  # it fails when any changes to go.mod are needed
+  modules-download-mode: readonly
+
+linters-settings:
+
+  cyclop:
+    # the maximal code complexity to report.
+    max-complexity: 15
+    # the maximal average package complexity.
+    package-average: 10
+    # should ignore tests.
+    skip-tests: false
+
+  dogsled:
+    # checks assignments with too many blank identifiers
+    max-blank-identifiers: 1
+
+  dupl:
+    # tokens count to trigger issue
+    threshold: 150
+
+  errcheck:
+    # report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    check-type-assertions: true
+    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+    check-blank: true
+
+  errorlint:
+    # Check whether fmt.Errorf uses the %w verb for formatting errors
+    errorf: true
+    # Check for plain type assertions and type switches
+    asserts: true
+    # Check for plain error comparisons
+    comparison: true
+
+  exhaustive:
+    # check switch statements in generated files also
+    check-generated: false
+    # indicates that switch statements are to be considered exhaustive if a
+    # 'default' case is present, even if all enum members aren't listed in the
+    # switch
+    default-signifies-exhaustive: true
+
+  funlen:
+    # the maximal length of a function.
+    lines: 100
+    # the maximal statements of a function.
+    statements: 40
+
+  gocognit:
+    # minimal code complexity to report, we recommend 10-20
+    min-complexity: 27
+
+  goconst:
+    # minimal length of string constant.
+    min-len: 3
+    # minimum occurrences of constant string count to trigger issue.
+    min-occurrences: 3
+    # ignore test files.
+    ignore-tests: false
+    # look for existing constants matching the values.
+    match-constant: true
+    # search also for duplicated numbers.
+    numbers: false
+    # minimum value, only works with goconst.numbers.
+    min: 3
+    # maximum value, only works with goconst.numbers.
+    max: 3
+    # ignore when constant is not used as function argument.
+    ignore-calls: true
+
+  gofumpt:
+    # Select the Go version to target.
+    lang-version: "1.19"
+
+  goimports:
+    # put imports beginning with prefix after 3rd-party packages.
+    local-prefixes: pasta.zaihui.com.cn
+
+  lll:
+    # max line length, lines longer will be reported.
+    line-length: 120
+    # tab width in spaces.
+    tab-width: 1
+
+  nolintlint:
+    # Enable to ensure that nolint directives are all used.
+    allow-unused: false
+    # Disable to ensure that nolint directives don't have a leading space.
+    allow-leading-space: true
+    # Exclude following linters from requiring an explanation.
+    allow-no-explanation: [ ]
+    # Enable to require an explanation of nonzero length after each nolint directive.
+    require-explanation: true
+    # Enable to require nolint directives to mention the specific linter being suppressed.
+    require-specific: true
+
+  nestif:
+    # minimal complexity of if statements to report.
+    min-complexity: 5
+
+  stylecheck:
+    # Select the Go version to target.
+    go: "1.19"
+    # https://staticcheck.io/docs/options#checks
+    checks: [ "all" ]
+    # https://staticcheck.io/docs/options#dot_import_whitelist
+    dot-import-whitelist: [ ]
+    # https://staticcheck.io/docs/options#http_status_code_whitelist
+    http-status-code-whitelist: [ ]
+
+  tagliatelle:
+    # check the struck tag name case
+    case:
+      # use the struct field name to check the name of the struct tag
+      use-field-name: false
+      # support string case: `camel`, `pascal`, `kebab`, `snake`, `goCamel`, `goPascal`, `goKebab`, `goSnake`, `upper`, `lower`
+      rules:
+        json: snake
+        mapstructure: snake
+
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(pasta.zaihui.com.cn)
+
+linters:
+  # https://golangci-lint.run/usage/linters/
+  enable:
+    # exhaustivestruct  # Check if any in structs not initialized (which is too noisy)
+    # gochecknoglobals  # Check if any global variables (which we use many (but maybe not best practice))
+    # gochecknoinits    # Check if any init functions (which we use many (but maybe not best practice))
+    # godox             # Check if any TODO or FIXME (which we use many (and maybe never get fixed))
+    # golint            # Deprecated
+    # gomnd             # Check if any magic number (which we use many)
+    # ifshort           # Check if `if` statement can be shorten (which has severe performance issue)
+    # interfacer        # Deprecated
+    # maligned          # Deprecated
+    # nlreturn          # Check if blank before return (which has no auto format, and too picky)
+    # paralleltest      # Check if t.Parallel is used (which maybe not a good choice)
+    # scopelint         # Deprecated
+    # wrapcheck         # Check if any error is not wrapped (which is too picky)
+    # wsl               # Check if blank is correct (which has no auto format, and too picky)
+    - asciicheck
+    - cyclop
+    - depguard
+    - dogsled
+    - dupl
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
+    - funlen
+#    - gci
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - goerr113
+    - gofmt
+    - gofumpt
+    - goheader
+    - goimports
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - importas
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nolintlint
+    - prealloc
+    - predeclared
+    - promlinter
+    - revive
+    - staticcheck
+    - stylecheck
+    - tagliatelle
+    - testpackage
+    - thelper
+    - typecheck
+    - unconvert
+    - unused
+    - whitespace

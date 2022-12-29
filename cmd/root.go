@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "ent-factory",
 	Short: "a code generation tool for factoring entity of ent model schema",
@@ -41,10 +41,10 @@ func init() {
 	rootCmd.PersistentFlags().StringP("schemaPath", "p", "", "path of ent schema model file")
 	rootCmd.PersistentFlags().StringP("outputPath", "o", "", "path to write factories")
 	rootCmd.PersistentFlags().StringP("projectPath", "j", "", "the relative path of this project")
-	rootCmd.PersistentFlags().StringP("factoriesPath", "t", "", "the relative path of these factories located in this project")
+	rootCmd.PersistentFlags().StringP(
+		"factoriesPath", "t", "", "the relative path of these factories located in this project")
 	rootCmd.PersistentFlags().StringP("appPath", "a", "", "the relative path of app client")
 	rootCmd.PersistentFlags().StringP("entClientName", "e", "", "the name of ent client")
-
 }
 
 func Fatal(msg string) {
