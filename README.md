@@ -1,4 +1,6 @@
 # Ent Factory
+[![CI](https://github.com/zaihui/ent-factory/workflows/CI/badge.svg)](https://github.com/zaihui/ent-factory)
+
 A Golang Factory Code Generation Command Tool For Ent.
 
 ## Function
