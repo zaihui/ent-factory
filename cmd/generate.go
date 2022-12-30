@@ -56,7 +56,6 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		fail(err.Error())
 	}
-	ignorePath := []string{"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime"}
 	commonPath := fmt.Sprintf("%s/common.go", outputPath)
 	_, err = os.Stat(commonPath)
 	if err != nil {
@@ -71,7 +70,7 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 			continue
 		}
 		isContinue := false
-		for _, n := range ignorePath {
+		for _, n := range constants.IngoreFolderNames {
 			if v.Name() == n {
 				isContinue = true
 			}
@@ -173,7 +172,7 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 		Fatalf("get factories path failed: %v\n", err)
 	}
 	if factoriesPath == "" {
-		factoriesPath = "factories"
+		factoriesPath = constants.DefaultFactoryPath
 	}
 
 	appPath, err := cmd.Flags().GetString("appPath")
@@ -181,7 +180,7 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 		Fatalf("get app path failed: %v\n", err)
 	}
 	if appPath == "" {
-		appPath = "service/app"
+		appPath = constants.DefaultAppPath
 	}
 
 	entClientName, err := cmd.Flags().GetString("entClientName")
@@ -189,7 +188,7 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 		Fatalf("get ent client path failed: %v\n", err)
 	}
 	if entClientName == "" {
-		entClientName = "EntClient"
+		entClientName = constants.DefaultEntClientName
 	}
 	entClientName = fmt.Sprintf("app.%s", entClientName)
 	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, err
