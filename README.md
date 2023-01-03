@@ -17,7 +17,7 @@ Simplify the process of creating mock model objects for ent schema.
 - [X] ~~CI Add Auto Lint~~
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
-- [ ] Option param to control overwrite exist factory or not
+- [X] ~~Option param to control overwrite exist factory or not~~
 
 ## Struct
 ```
@@ -50,6 +50,9 @@ go install github.com/zaihui/ent-factory@latest
   - the relative path of this project
   - eg. `github.com/zaihui/ent-factory`
   - **required**
+- overWrite
+  - whether overwrite these exist files
+  - the default value is `false`
 - factoriesPath
   - the relative path of these factories located in this project
   - eg. `factories`, means `projectPath/factories`

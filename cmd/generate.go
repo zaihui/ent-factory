@@ -28,9 +28,10 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-//nolint:funlen,gocognit,cyclop // fix it later
+//nolint:gocognit,cyclop // fix it later
 func GenerateFactories(cmd *cobra.Command, _ []string) {
-	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, err := ExtraFlags(cmd)
+	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite,
+		err := ExtraFlags(cmd)
 	if err != nil {
 		fail(err.Error())
 	}
@@ -81,33 +82,51 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 		filePath := fmt.Sprintf("%s/%s", schemaPath, v.Name())
 		realPath := fmt.Sprintf("%s.go", filePath)
 		realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, v.Name(), v.Name())
-		outReader, err := RunGenerate(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName)
+		if !overWrite {
+			//nolint:gocritic // no way to rewrite, because of the os.IsNotExist is not a case
+			if _, err := os.Stat(realOutPutPath); err == nil {
+				continue
+			} else if os.IsNotExist(err) {
+				CreateOneFactory(realPath, v, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
+					outputPath)
+			} else {
+				fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
+			}
+		} else {
+			CreateOneFactory(realPath, v, realOutPutPath, projectPath, factoriesPath, appPath, entClientName, outputPath)
+		}
+	}
+}
+
+func CreateOneFactory(realPath string, v os.FileInfo, realOutPutPath string, projectPath string, factoriesPath string,
+	appPath string, entClientName string, outputPath string,
+) {
+	outReader, err := RunGenerate(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName)
+	if err != nil {
+		fail(err.Error())
+	}
+	var dest io.Writer
+	//nolint:nestif // need it
+	if outputPath == "" {
+		dest = os.Stdout
+	} else {
+		_, err := os.Stat(filepath.Dir(realOutPutPath))
+		if os.IsNotExist(err) {
+			err2 := os.MkdirAll(filepath.Dir(realOutPutPath), os.FileMode(constants.Perm))
+			if err2 != nil {
+				fail(err2.Error())
+			}
+		} else if err != nil {
+			fail(err.Error())
+		}
+		dest, err = os.OpenFile(realOutPutPath, os.O_RDWR|os.O_CREATE, os.FileMode(constants.Perm))
 		if err != nil {
 			fail(err.Error())
 		}
-		var dest io.Writer
-		//nolint:nestif // need it
-		if outputPath == "" {
-			dest = os.Stdout
-		} else {
-			_, err := os.Stat(filepath.Dir(realOutPutPath))
-			if os.IsNotExist(err) {
-				err2 := os.MkdirAll(filepath.Dir(realOutPutPath), os.FileMode(constants.Perm))
-				if err2 != nil {
-					fail(err2.Error())
-				}
-			} else if err != nil {
-				fail(err.Error())
-			}
-			dest, err = os.OpenFile(realOutPutPath, os.O_RDWR|os.O_CREATE, os.FileMode(constants.Perm))
-			if err != nil {
-				fail(err.Error())
-			}
-		}
+	}
 
-		if _, err := io.Copy(dest, outReader); err != nil {
-			fail(err.Error())
-		}
+	if _, err := io.Copy(dest, outReader); err != nil {
+		fail(err.Error())
 	}
 }
 
@@ -146,7 +165,7 @@ func CreatePathAndCommonFile(commonPath string, outputPath string) {
 	}
 }
 
-func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, string, string, error) {
+func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, string, string, bool, error) {
 	schemaFile, err := cmd.Flags().GetString("schemaFile")
 	if err != nil {
 		Fatalf("get schema file failed: %v\n", err)
@@ -165,6 +184,10 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 	}
 	if projectPath == "" {
 		Fatalf("project path cannot be empty")
+	}
+	overWrite, err := cmd.Flags().GetBool("overwrite")
+	if err != nil {
+		Fatalf("overwrite setting cannot be empty")
 	}
 
 	factoriesPath, err := cmd.Flags().GetString("factoriesPath")
@@ -191,7 +214,7 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 		entClientName = constants.DefaultEntClientName
 	}
 	entClientName = fmt.Sprintf("app.%s", entClientName)
-	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, err
+	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite, err
 }
 
 func fail(msg string) {
