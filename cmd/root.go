@@ -41,6 +41,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("schemaPath", "p", "", "path of ent schema model file")
 	rootCmd.PersistentFlags().StringP("outputPath", "o", "", "path to write factories")
 	rootCmd.PersistentFlags().StringP("projectPath", "j", "", "the relative path of this project")
+	rootCmd.PersistentFlags().BoolP("overwrite", "r", false, "whether overwrite exist files")
 	rootCmd.PersistentFlags().StringP(
 		"factoriesPath", "t", "", "the relative path of these factories located in this project")
 	rootCmd.PersistentFlags().StringP("appPath", "a", "", "the relative path of app client")

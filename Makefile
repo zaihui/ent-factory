@@ -12,6 +12,7 @@ setup:
 .PHONY: fmt lint clean
 
 fmt:
+	@gofumpt -w .
 	@gofmt -d -w -e .
 
 lint:
