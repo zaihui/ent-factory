@@ -50,7 +50,7 @@ go install github.com/zaihui/ent-factory@latest
   - the relative path of this project
   - eg. `github.com/zaihui/ent-factory`
   - **required**
-- overWrite
+- overwrite
   - whether overwrite these exist files
   - the default value is `false`
 - factoriesPath
