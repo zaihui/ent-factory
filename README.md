@@ -65,8 +65,10 @@ go install github.com/zaihui/ent-factory@latest
   - the name of ent client, means `appPath.entClientName`
   - the default value is `EntClient`
 #### Makefile Command
-> CAUTION!: This Command will regenerate every factory based on the current struct of table. 
-So, if you do some customize works, they may be lost.
+> CAUTION!: This Command will **NOT** regenerate every factory based on the current struct of table.
+> 
+> If you want to **Regenerate**, please use the `overwrite` flag. Or delete what you want to regenerate then use this 
+> command.
 ```bash
 all_factory:
   go run ent-factory generate --schemaPath {your ent schema path} --outputPath {path of your factories} ----projectPath {your project module path}
