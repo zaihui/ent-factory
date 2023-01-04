@@ -77,7 +77,10 @@ Sample
 ```bash
 all_factory:
   go run ent-factory generate --schemaPath gen/entschema --outputPath  /Users/lvxinyan/zaihui/ent-factory/factories --projectPath github.com/zaihui/ent-factory
+## for one factory
+ent-factory generate --schemaFile gen/entschema/{one ent model file}.go --outputPath  /Users/lvxinyan/zaihui/ent-factory/factories --projectPath github.com/zaihui/ent-factory
 ```
+
 
 ## Sample
 ### The sample of a factory
