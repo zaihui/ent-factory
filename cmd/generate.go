@@ -35,7 +35,6 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		fail(err.Error())
 	}
-
 	if schemaFile == "" && schemaPath == "" {
 		Fatalf("schema file and schema path must give at lease one")
 	}
@@ -53,10 +52,6 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 			fail(err.Error())
 		}
 	}(f)
-	files, err := f.Readdir(0)
-	if err != nil {
-		fail(err.Error())
-	}
 	commonPath := fmt.Sprintf("%s/common.go", outputPath)
 	_, err = os.Stat(commonPath)
 	if err != nil {
@@ -65,6 +60,17 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 		} else {
 			fail(err.Error())
 		}
+	}
+	if schemaFile != "" && schemaPath == "" {
+		schemaName := ExtraNameFromSchemaFilePath(schemaFile)
+		realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, schemaName, schemaName)
+		CreateOneFactory(schemaFile, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
+			outputPath)
+		return
+	}
+	files, err := f.Readdir(0)
+	if err != nil {
+		fail(err.Error())
 	}
 	for _, v := range files {
 		if !v.IsDir() {
@@ -79,29 +85,42 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 		if isContinue {
 			continue
 		}
-		filePath := fmt.Sprintf("%s/%s", schemaPath, v.Name())
-		realPath := fmt.Sprintf("%s.go", filePath)
-		realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, v.Name(), v.Name())
+		realPath, realOutPutPath := GetRealPathAndFilePath(schemaPath, v, outputPath)
 		if !overWrite {
 			//nolint:gocritic // no way to rewrite, because of the os.IsNotExist is not a case
 			if _, err := os.Stat(realOutPutPath); err == nil {
 				continue
 			} else if os.IsNotExist(err) {
-				CreateOneFactory(realPath, v, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
+				CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
 					outputPath)
 			} else {
 				fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
 			}
 		} else {
-			CreateOneFactory(realPath, v, realOutPutPath, projectPath, factoriesPath, appPath, entClientName, outputPath)
+			CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName, outputPath)
 		}
 	}
 }
 
-func CreateOneFactory(realPath string, v os.FileInfo, realOutPutPath string, projectPath string, factoriesPath string,
-	appPath string, entClientName string, outputPath string,
+func GetRealPathAndFilePath(schemaPath string, v os.FileInfo, outputPath string) (string, string) {
+	filePath := fmt.Sprintf("%s/%s", schemaPath, v.Name())
+	realPath := fmt.Sprintf("%s.go", filePath)
+	realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, v.Name(), v.Name())
+	return realPath, realOutPutPath
+}
+
+func ExtraNameFromSchemaFilePath(schemaFile string) string {
+	endPoints := strings.Split(schemaFile, "/")
+	schemaFileName := endPoints[len(endPoints)-1]
+	schemaNames := strings.Split(schemaFileName, ".")
+	schemaName := schemaNames[0]
+	return schemaName
+}
+
+func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
+	outputPath string,
 ) {
-	outReader, err := RunGenerate(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName)
+	outReader, err := RunGenerate(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName)
 	if err != nil {
 		fail(err.Error())
 	}
