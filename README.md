@@ -10,6 +10,7 @@ Simplify the process of creating mock model objects for ent schema.
 - Allow self define the value of any field independently.
 
 ## Todo
+- [ ] Add A Blank Space Between With Functions. It's tricky, because printer rules against gofmt rules.
 - [X] ~~Auto Format Code~~
 - [ ] Support Time Optional Function
 - [ ] Support Json Field Optional Function
