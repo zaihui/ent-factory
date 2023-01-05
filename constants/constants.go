@@ -11,5 +11,5 @@ var (
 	DefaultAppPath       = "service/app"
 	DefaultFactoryPath   = "factories"
 	DefaultEntClientName = "EntClient"
-	IngoreFolderNames    = []string{"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime"}
+	IgnoreFolderNames    = []string{"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime"}
 )
