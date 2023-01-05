@@ -77,7 +77,7 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 			continue
 		}
 		isContinue := false
-		for _, n := range constants.IngoreFolderNames {
+		for _, n := range constants.IgnoreFolderNames {
 			if v.Name() == n {
 				isContinue = true
 			}
@@ -238,7 +238,10 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 
 func fail(msg string) {
 	if msg != "" {
-		fmt.Fprintln(os.Stderr, msg)
+		_, err := fmt.Fprintln(os.Stderr, msg)
+		if err != nil {
+			return
+		}
 	}
 	os.Exit(1)
 }
@@ -280,7 +283,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 	withTypeDef(astOut, fnTypeIdent, fnParamType)
 
 	// Add function for each applicable struct field
-	if err := withFuncs(
+	if err := withFunc(
 		astOut,
 		structType,
 		fnTypeIdent,
@@ -291,7 +294,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 		return nil, err
 	}
 
-	if err := WithFuncNew(
+	if err := NewFunc(
 		astOut,
 		paramTypeName,
 		structType,
@@ -316,7 +319,8 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 	return res, nil
 }
 
-func WithFuncNew(astOut *ast.File,
+// NewFunc Create the New instance function.
+func NewFunc(astOut *ast.File,
 	paramTypeName string,
 	structType *ast.TypeSpec,
 	fnIdent *ast.Ident,
@@ -487,9 +491,9 @@ func funcTypeIdent(structName string, exportFnType bool) *ast.Ident {
 	return ast.NewIdent(fmt.Sprintf(nameF, casedStructName))
 }
 
-// withFuncs creates a functional option function for each applicable field and
+// withFunc creates a functional option function for each applicable field and
 // adds it to astOut.
-func withFuncs(
+func withFunc(
 	astOut *ast.File,
 	structType *ast.TypeSpec,
 	fnIdent *ast.Ident,
