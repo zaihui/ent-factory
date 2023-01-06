@@ -607,7 +607,7 @@ func (m *TestMutation) PrintTimes() (r int, exists bool) {
 // OldPrintTimes returns the old "print_times" field's value of the Test entity.
 // If the Test object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TestMutation) OldPrintTimes(ctx context.Context) (v int, err error) {
+func (m *TestMutation) OldPrintTimes(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPrintTimes is only allowed on UpdateOne operations")
 	}
@@ -639,10 +639,24 @@ func (m *TestMutation) AddedPrintTimes() (r int, exists bool) {
 	return *v, true
 }
 
+// ClearPrintTimes clears the value of the "print_times" field.
+func (m *TestMutation) ClearPrintTimes() {
+	m.print_times = nil
+	m.addprint_times = nil
+	m.clearedFields[test.FieldPrintTimes] = struct{}{}
+}
+
+// PrintTimesCleared returns if the "print_times" field was cleared in this mutation.
+func (m *TestMutation) PrintTimesCleared() bool {
+	_, ok := m.clearedFields[test.FieldPrintTimes]
+	return ok
+}
+
 // ResetPrintTimes resets all changes to the "print_times" field.
 func (m *TestMutation) ResetPrintTimes() {
 	m.print_times = nil
 	m.addprint_times = nil
+	delete(m.clearedFields, test.FieldPrintTimes)
 }
 
 // SetRingConfigs sets the "ring_configs" field.
@@ -2002,6 +2016,9 @@ func (m *TestMutation) ClearedFields() []string {
 	if m.FieldCleared(test.FieldDeactivatedAt) {
 		fields = append(fields, test.FieldDeactivatedAt)
 	}
+	if m.FieldCleared(test.FieldPrintTimes) {
+		fields = append(fields, test.FieldPrintTimes)
+	}
 	if m.FieldCleared(test.FieldEndOfTakeaway) {
 		fields = append(fields, test.FieldEndOfTakeaway)
 	}
@@ -2030,6 +2047,9 @@ func (m *TestMutation) ClearField(name string) error {
 	switch name {
 	case test.FieldDeactivatedAt:
 		m.ClearDeactivatedAt()
+		return nil
+	case test.FieldPrintTimes:
+		m.ClearPrintTimes()
 		return nil
 	case test.FieldEndOfTakeaway:
 		m.ClearEndOfTakeaway()

@@ -51,7 +51,7 @@ func SetEnableAutoAccept(enableAutoAcceptGen bool) TestFieldSetter {
 	}
 }
 
-func SetPrintTimes(printTimesGen int) TestFieldSetter {
+func SetPrintTimes(printTimesGen *int) TestFieldSetter {
 	return func(testGen *entschema.Test) {
 		testGen.PrintTimes = printTimesGen
 	}
@@ -137,7 +137,7 @@ func New(s factories.TestSuite, opts ...TestFieldSetter) *entschema.Test {
 		SetPhone(data.Phone).
 		SetAnnouncement(data.Announcement).
 		SetEnableAutoAccept(data.EnableAutoAccept).
-		SetPrintTimes(data.PrintTimes).
+		SetNillablePrintTimes(data.PrintTimes).
 		SetBusinessGroupID(data.BusinessGroupID).
 		SetBusinessGroupUID(data.BusinessGroupUID).
 		SetDishCategories(data.DishCategories).

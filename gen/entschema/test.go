@@ -42,7 +42,7 @@ type Test struct {
 	// 支付配置
 	PayConfigs schema.PayConfig `json:"pay_configs,omitempty"`
 	// 打印次数
-	PrintTimes int `json:"print_times,omitempty"`
+	PrintTimes *int `json:"print_times,omitempty"`
 	// 铃声配置
 	RingConfigs schema.RingConfig `json:"ring_configs,omitempty"`
 	// 商户id
@@ -192,7 +192,8 @@ func (t *Test) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field print_times", values[i])
 			} else if value.Valid {
-				t.PrintTimes = int(value.Int64)
+				t.PrintTimes = new(int)
+				*t.PrintTimes = int(value.Int64)
 			}
 		case test.FieldRingConfigs:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -379,8 +380,10 @@ func (t *Test) String() string {
 	builder.WriteString("pay_configs=")
 	builder.WriteString(fmt.Sprintf("%v", t.PayConfigs))
 	builder.WriteString(", ")
-	builder.WriteString("print_times=")
-	builder.WriteString(fmt.Sprintf("%v", t.PrintTimes))
+	if v := t.PrintTimes; v != nil {
+		builder.WriteString("print_times=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("ring_configs=")
 	builder.WriteString(fmt.Sprintf("%v", t.RingConfigs))
