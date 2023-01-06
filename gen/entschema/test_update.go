@@ -121,9 +121,23 @@ func (tu *TestUpdate) SetPrintTimes(i int) *TestUpdate {
 	return tu
 }
 
+// SetNillablePrintTimes sets the "print_times" field if the given value is not nil.
+func (tu *TestUpdate) SetNillablePrintTimes(i *int) *TestUpdate {
+	if i != nil {
+		tu.SetPrintTimes(*i)
+	}
+	return tu
+}
+
 // AddPrintTimes adds i to the "print_times" field.
 func (tu *TestUpdate) AddPrintTimes(i int) *TestUpdate {
 	tu.mutation.AddPrintTimes(i)
+	return tu
+}
+
+// ClearPrintTimes clears the value of the "print_times" field.
+func (tu *TestUpdate) ClearPrintTimes() *TestUpdate {
+	tu.mutation.ClearPrintTimes()
 	return tu
 }
 
@@ -517,6 +531,9 @@ func (tu *TestUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.AddedPrintTimes(); ok {
 		_spec.AddField(test.FieldPrintTimes, field.TypeInt, value)
 	}
+	if tu.mutation.PrintTimesCleared() {
+		_spec.ClearField(test.FieldPrintTimes, field.TypeInt)
+	}
 	if value, ok := tu.mutation.RingConfigs(); ok {
 		_spec.SetField(test.FieldRingConfigs, field.TypeJSON, value)
 	}
@@ -710,9 +727,23 @@ func (tuo *TestUpdateOne) SetPrintTimes(i int) *TestUpdateOne {
 	return tuo
 }
 
+// SetNillablePrintTimes sets the "print_times" field if the given value is not nil.
+func (tuo *TestUpdateOne) SetNillablePrintTimes(i *int) *TestUpdateOne {
+	if i != nil {
+		tuo.SetPrintTimes(*i)
+	}
+	return tuo
+}
+
 // AddPrintTimes adds i to the "print_times" field.
 func (tuo *TestUpdateOne) AddPrintTimes(i int) *TestUpdateOne {
 	tuo.mutation.AddPrintTimes(i)
+	return tuo
+}
+
+// ClearPrintTimes clears the value of the "print_times" field.
+func (tuo *TestUpdateOne) ClearPrintTimes() *TestUpdateOne {
+	tuo.mutation.ClearPrintTimes()
 	return tuo
 }
 
@@ -1135,6 +1166,9 @@ func (tuo *TestUpdateOne) sqlSave(ctx context.Context) (_node *Test, err error) 
 	}
 	if value, ok := tuo.mutation.AddedPrintTimes(); ok {
 		_spec.AddField(test.FieldPrintTimes, field.TypeInt, value)
+	}
+	if tuo.mutation.PrintTimesCleared() {
+		_spec.ClearField(test.FieldPrintTimes, field.TypeInt)
 	}
 	if value, ok := tuo.mutation.RingConfigs(); ok {
 		_spec.SetField(test.FieldRingConfigs, field.TypeJSON, value)

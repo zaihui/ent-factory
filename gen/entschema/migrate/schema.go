@@ -23,7 +23,7 @@ var (
 		{Name: "enable_auto_accept", Type: field.TypeBool, Default: false},
 		{Name: "delivery_configs", Type: field.TypeJSON},
 		{Name: "pay_configs", Type: field.TypeJSON},
-		{Name: "print_times", Type: field.TypeInt},
+		{Name: "print_times", Type: field.TypeInt, Nullable: true},
 		{Name: "ring_configs", Type: field.TypeJSON},
 		{Name: "business_group_id", Type: field.TypeInt},
 		{Name: "business_group_uid", Type: field.TypeString},

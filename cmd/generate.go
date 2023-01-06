@@ -680,7 +680,9 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
 				continue
 			}
-			IndentString = IndentString + ".\n\tSet" + withFirstCharUpper(fieldName.Name) + "(data." + fieldName.Name + ")"
+
+			IndentString = IndentString + getSetStr(fieldName) +
+				withFirstCharUpper(fieldName.Name) + "(data." + fieldName.Name + ")"
 		}
 	}
 	IndentString = "Create()" + IndentString + ".\n\tSaveX(s.Context())"
@@ -689,6 +691,22 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 		Sel: ast.NewIdent(IndentString),
 	}
 	return &res
+}
+
+func getSetStr(ident *ast.Ident) string {
+	setStr := ".\n\tSet"
+	if ident.Obj == nil {
+		return setStr
+	}
+	decl, ok := ident.Obj.Decl.(*ast.Field)
+	if !ok {
+		return setStr
+	}
+	_, ok = decl.Type.(*ast.StarExpr)
+	if ok {
+		setStr = ".\n\tSetNillable"
+	}
+	return setStr
 }
 
 func getImportDef(astOut *ast.File, projectPath, factoriesPath, appPath string) {

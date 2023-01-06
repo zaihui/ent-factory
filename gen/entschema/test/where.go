@@ -921,6 +921,20 @@ func PrintTimesLTE(v int) predicate.Test {
 	})
 }
 
+// PrintTimesIsNil applies the IsNil predicate on the "print_times" field.
+func PrintTimesIsNil() predicate.Test {
+	return predicate.Test(func(s *sql.Selector) {
+		s.Where(sql.IsNull(s.C(FieldPrintTimes)))
+	})
+}
+
+// PrintTimesNotNil applies the NotNil predicate on the "print_times" field.
+func PrintTimesNotNil() predicate.Test {
+	return predicate.Test(func(s *sql.Selector) {
+		s.Where(sql.NotNull(s.C(FieldPrintTimes)))
+	})
+}
+
 // BusinessGroupIDEQ applies the EQ predicate on the "business_group_id" field.
 func BusinessGroupIDEQ(v int) predicate.Test {
 	return predicate.Test(func(s *sql.Selector) {

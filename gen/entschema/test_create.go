@@ -143,6 +143,14 @@ func (tc *TestCreate) SetPrintTimes(i int) *TestCreate {
 	return tc
 }
 
+// SetNillablePrintTimes sets the "print_times" field if the given value is not nil.
+func (tc *TestCreate) SetNillablePrintTimes(i *int) *TestCreate {
+	if i != nil {
+		tc.SetPrintTimes(*i)
+	}
+	return tc
+}
+
 // SetRingConfigs sets the "ring_configs" field.
 func (tc *TestCreate) SetRingConfigs(sc schema.RingConfig) *TestCreate {
 	tc.mutation.SetRingConfigs(sc)
@@ -480,9 +488,6 @@ func (tc *TestCreate) check() error {
 	if _, ok := tc.mutation.PayConfigs(); !ok {
 		return &ValidationError{Name: "pay_configs", err: errors.New(`entschema: missing required field "Test.pay_configs"`)}
 	}
-	if _, ok := tc.mutation.PrintTimes(); !ok {
-		return &ValidationError{Name: "print_times", err: errors.New(`entschema: missing required field "Test.print_times"`)}
-	}
 	if _, ok := tc.mutation.RingConfigs(); !ok {
 		return &ValidationError{Name: "ring_configs", err: errors.New(`entschema: missing required field "Test.ring_configs"`)}
 	}
@@ -625,7 +630,7 @@ func (tc *TestCreate) createSpec() (*Test, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := tc.mutation.PrintTimes(); ok {
 		_spec.SetField(test.FieldPrintTimes, field.TypeInt, value)
-		_node.PrintTimes = value
+		_node.PrintTimes = &value
 	}
 	if value, ok := tc.mutation.RingConfigs(); ok {
 		_spec.SetField(test.FieldRingConfigs, field.TypeJSON, value)
@@ -880,6 +885,12 @@ func (u *TestUpsert) UpdatePrintTimes() *TestUpsert {
 // AddPrintTimes adds v to the "print_times" field.
 func (u *TestUpsert) AddPrintTimes(v int) *TestUpsert {
 	u.Add(test.FieldPrintTimes, v)
+	return u
+}
+
+// ClearPrintTimes clears the value of the "print_times" field.
+func (u *TestUpsert) ClearPrintTimes() *TestUpsert {
+	u.SetNull(test.FieldPrintTimes)
 	return u
 }
 
@@ -1352,6 +1363,13 @@ func (u *TestUpsertOne) AddPrintTimes(v int) *TestUpsertOne {
 func (u *TestUpsertOne) UpdatePrintTimes() *TestUpsertOne {
 	return u.Update(func(s *TestUpsert) {
 		s.UpdatePrintTimes()
+	})
+}
+
+// ClearPrintTimes clears the value of the "print_times" field.
+func (u *TestUpsertOne) ClearPrintTimes() *TestUpsertOne {
+	return u.Update(func(s *TestUpsert) {
+		s.ClearPrintTimes()
 	})
 }
 
@@ -2030,6 +2048,13 @@ func (u *TestUpsertBulk) AddPrintTimes(v int) *TestUpsertBulk {
 func (u *TestUpsertBulk) UpdatePrintTimes() *TestUpsertBulk {
 	return u.Update(func(s *TestUpsert) {
 		s.UpdatePrintTimes()
+	})
+}
+
+// ClearPrintTimes clears the value of the "print_times" field.
+func (u *TestUpsertBulk) ClearPrintTimes() *TestUpsertBulk {
+	return u.Update(func(s *TestUpsert) {
+		s.ClearPrintTimes()
 	})
 }
 

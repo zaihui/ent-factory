@@ -120,7 +120,7 @@ func (Test) Fields() []ent.Field {
 		field.Bool("enable_auto_accept").Default(FALSE).Comment("是否开启自动接单"),
 		field.JSON("delivery_configs", DeliveryConfig{}).Comment("外卖配置"),
 		field.JSON("pay_configs", PayConfig{}).Comment("支付配置"),
-		field.Int("print_times").Comment("打印次数"),
+		field.Int("print_times").Nillable().Optional().Comment("打印次数"),
 		field.JSON("ring_configs", RingConfig{}).Comment("铃声配置"),
 		field.Int("business_group_id").Comment("商户id"),
 		field.String("business_group_uid").Comment("商户uid"),
