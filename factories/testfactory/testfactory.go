@@ -1,10 +1,13 @@
 package testfactory
 
 import (
+	"time"
+
 	"github.com/bxcodec/faker"
 	"github.com/zaihui/ent-factory/factories"
 	"github.com/zaihui/ent-factory/gen/entschema"
 	"github.com/zaihui/ent-factory/service/app"
+	"github.com/zaihui/ent-factory/spec/schema"
 )
 
 type TestFieldSetter func(*entschema.Test)
@@ -18,6 +21,24 @@ func SetID(iDGen int) TestFieldSetter {
 func SetUID(uIDGen string) TestFieldSetter {
 	return func(testGen *entschema.Test) {
 		testGen.UID = uIDGen
+	}
+}
+
+func SetCreatedAt(createdAtGen time.Time) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.CreatedAt = createdAtGen
+	}
+}
+
+func SetUpdatedAt(updatedAtGen time.Time) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.UpdatedAt = updatedAtGen
+	}
+}
+
+func SetDeactivatedAt(deactivatedAtGen *time.Time) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.DeactivatedAt = deactivatedAtGen
 	}
 }
 
@@ -51,9 +72,27 @@ func SetEnableAutoAccept(enableAutoAcceptGen bool) TestFieldSetter {
 	}
 }
 
+func SetDeliveryConfigs(deliveryConfigsGen schema.DeliveryConfig) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.DeliveryConfigs = deliveryConfigsGen
+	}
+}
+
+func SetPayConfigs(payConfigsGen schema.PayConfig) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.PayConfigs = payConfigsGen
+	}
+}
+
 func SetPrintTimes(printTimesGen *int) TestFieldSetter {
 	return func(testGen *entschema.Test) {
 		testGen.PrintTimes = printTimesGen
+	}
+}
+
+func SetRingConfigs(ringConfigsGen schema.RingConfig) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.RingConfigs = ringConfigsGen
 	}
 }
 
@@ -75,9 +114,21 @@ func SetDishCategories(dishCategoriesGen []string) TestFieldSetter {
 	}
 }
 
+func SetEndOfTakeaway(endOfTakeawayGen time.Time) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.EndOfTakeaway = endOfTakeawayGen
+	}
+}
+
 func SetMode(modeGen int) TestFieldSetter {
 	return func(testGen *entschema.Test) {
 		testGen.Mode = modeGen
+	}
+}
+
+func SetSelfPickupConfigs(selfPickupConfigsGen schema.SelfPickupConfig) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.SelfPickupConfigs = selfPickupConfigsGen
 	}
 }
 
@@ -111,6 +162,12 @@ func SetLongitude(longitudeGen string) TestFieldSetter {
 	}
 }
 
+func SetBanners(bannersGen schema.Banners) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.Banners = bannersGen
+	}
+}
+
 func SetSort(sortGen int) TestFieldSetter {
 	return func(testGen *entschema.Test) {
 		testGen.Sort = sortGen
@@ -120,6 +177,24 @@ func SetSort(sortGen int) TestFieldSetter {
 func SetPayMode(payModeGen string) TestFieldSetter {
 	return func(testGen *entschema.Test) {
 		testGen.PayMode = payModeGen
+	}
+}
+
+func SetDineInConfigs(dineInConfigsGen schema.DineInConfigs) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.DineInConfigs = dineInConfigsGen
+	}
+}
+
+func SetDealsConfig(dealsConfigGen schema.DealsConfig) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.DealsConfig = dealsConfigGen
+	}
+}
+
+func SetPrintConfig(printConfigGen schema.PrintConfig) TestFieldSetter {
+	return func(testGen *entschema.Test) {
+		testGen.PrintConfig = printConfigGen
 	}
 }
 

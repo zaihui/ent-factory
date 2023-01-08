@@ -6,18 +6,22 @@ A Golang Factory Code Generation Command Tool For Ent.
 ## Function
 Simplify the process of creating mock model objects for ent schema. 
 - Auto reading the struct of ent model schemas to create factory functions.
+  - generate the imported field in default
 - Auto fake data for each field as default.
 - Allow self define the value of any field independently.
 
 ## Todo
-- [ ] Add A Blank Space Between With Functions. It's tricky, because printer rules against gofmt rules.
-- [X] ~~Auto Format Code~~
-- [ ] Support Time Optional Function
-- [ ] Support Json Field Optional Function
-- [X] ~~Code Lint~~
-- [X] ~~CI Add Auto Lint~~
+- [ ] Better Format
+  - Add A Blank Space Between With Functions. It's tricky, because printer rules against gofmt rules.
+  - Import Sort by fmt rules
+- [ ] Generate imported fields have a switch to control
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
+- [X] ~~Auto Format Code~~
+- [X] ~~Support Time Optional Function~~
+- [X] ~~Support Json Field Optional Function~~
+- [X] ~~Code Lint~~
+- [X] ~~CI Add Auto Lint~~
 - [X] ~~Option param to control overwrite exist factory or not~~
 
 ## Struct

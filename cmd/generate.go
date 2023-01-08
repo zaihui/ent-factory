@@ -15,6 +15,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/zaihui/ent-factory/pkg"
+
 	"github.com/spf13/cobra"
 	"github.com/zaihui/ent-factory/constants"
 )
@@ -30,7 +32,7 @@ func init() {
 
 //nolint:gocognit,cyclop // fix it later
 func GenerateFactories(cmd *cobra.Command, _ []string) {
-	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite,
+	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite, modelPath,
 		err := ExtraFlags(cmd)
 	if err != nil {
 		fail(err.Error())
@@ -65,7 +67,7 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 		schemaName := ExtraNameFromSchemaFilePath(schemaFile)
 		realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, schemaName, schemaName)
 		CreateOneFactory(schemaFile, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-			outputPath)
+			modelPath, outputPath)
 		return
 	}
 	files, err := f.Readdir(0)
@@ -92,12 +94,13 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 				continue
 			} else if os.IsNotExist(err) {
 				CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-					outputPath)
+					modelPath, outputPath)
 			} else {
 				fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
 			}
 		} else {
-			CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName, outputPath)
+			CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
+				modelPath, outputPath)
 		}
 	}
 }
@@ -118,9 +121,10 @@ func ExtraNameFromSchemaFilePath(schemaFile string) string {
 }
 
 func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-	outputPath string,
+	modelPath, outputPath string,
 ) {
-	outReader, err := RunGenerate(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName)
+	outReader, err := RunGenerate(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath,
+		entClientName, modelPath)
 	if err != nil {
 		fail(err.Error())
 	}
@@ -184,7 +188,7 @@ func CreatePathAndCommonFile(commonPath string, outputPath string) {
 	}
 }
 
-func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, string, string, bool, error) {
+func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, string, string, bool, string, error) {
 	schemaFile, err := cmd.Flags().GetString("schemaFile")
 	if err != nil {
 		Fatalf("get schema file failed: %v\n", err)
@@ -233,7 +237,15 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 		entClientName = constants.DefaultEntClientName
 	}
 	entClientName = fmt.Sprintf("app.%s", entClientName)
-	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite, err
+	modelPath, err := cmd.Flags().GetString("modelPath")
+	if err != nil {
+		Fatalf("get model path failed: %v\n", err)
+	}
+	if modelPath == "" {
+		modelPath = constants.DefaultModelPath
+	}
+	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite,
+		modelPath, err
 }
 
 func fail(msg string) {
@@ -247,7 +259,8 @@ func fail(msg string) {
 }
 
 // RunGenerate ===== generate one factory schema =======.
-func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesPath, appPath, entClientName string) (
+func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesPath, appPath, entClientName,
+	modelPath string) (
 	io.Reader, error,
 ) {
 	// Read input file
@@ -277,7 +290,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 	astOut := &ast.File{Name: ast.NewIdent(packageName)}
 
 	// Add import
-	getImportDef(astOut, projectPath, factoriesPath, appPath)
+	getImportDef(astOut, structType, true, true, projectPath, factoriesPath, appPath, modelPath)
 
 	// Add type definition for functional option function signature
 	withTypeDef(astOut, fnTypeIdent, fnParamType)
@@ -289,6 +302,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 		fnTypeIdent,
 		fnParamType,
 		false,
+		true,
 		true,
 		constants.SkipStructFields); err != nil {
 		return nil, err
@@ -498,7 +512,7 @@ func withFunc(
 	structType *ast.TypeSpec,
 	fnIdent *ast.Ident,
 	fnParamType *ast.StarExpr,
-	generateForUnexportedFields, ignoreUnsupported bool,
+	generateForUnexportedFields, ignoreEmbedded, genImportedField bool,
 	skipStructFields map[string]struct{},
 ) error {
 	structTypeTyped, ok := structType.Type.(*ast.StructType)
@@ -514,7 +528,7 @@ func withFunc(
 	for _, field := range structTypeTyped.Fields.List {
 		// No embedded fields
 		if len(field.Names) == 0 {
-			if ignoreUnsupported {
+			if ignoreEmbedded {
 				continue
 			} else {
 				return constants.ErrDisableAllowed
@@ -522,6 +536,7 @@ func withFunc(
 		}
 
 		// No fields whose type is imported from another package
+		// todo 判断import，返回
 		var fieldContainsImport bool
 		ast.Inspect(field, func(n ast.Node) bool {
 			_, ok := n.(*ast.SelectorExpr)
@@ -532,10 +547,8 @@ func withFunc(
 			return true
 		})
 		if fieldContainsImport {
-			if ignoreUnsupported {
+			if !genImportedField {
 				continue
-			} else {
-				return constants.ErrCanNotGen
 			}
 		}
 
@@ -709,35 +722,106 @@ func getSetStr(ident *ast.Ident) string {
 	return setStr
 }
 
-func getImportDef(astOut *ast.File, projectPath, factoriesPath, appPath string) {
-	importDecl1 := &ast.GenDecl{
-		Tok: token.IMPORT,
-		Specs: []ast.Spec{
-			&ast.ImportSpec{
-				Path: &ast.BasicLit{
-					Kind:  token.STRING,
-					Value: strconv.Quote("github.com/bxcodec/faker"),
-				},
+//nolint:gocognit // refactor later
+func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded,
+	genImported bool, projectPath, factoriesPath, appPath, modelPath string,
+) {
+	structTypeTyped, ok := structType.Type.(*ast.StructType)
+	if !ok {
+		panic("bad type for struct type")
+	}
+	var importFields []string
+	for _, field := range structTypeTyped.Fields.List {
+		// No embedded fields
+		if len(field.Names) == 0 {
+			if ignoreEmbedded {
+				continue
+			} else {
+				fail(constants.ErrDisableAllowed.Error())
+			}
+		}
+		var fieldContainsImport bool
+		ast.Inspect(field, func(n ast.Node) bool {
+			sel, ok := n.(*ast.SelectorExpr)
+			//nolint:nestif // have to
+			if ok {
+				fieldContainsImport = true
+				if genImported {
+					ident, ok := sel.X.(*ast.Ident)
+					if ok {
+						if !pkg.SliceContain(importFields, ident.Name) {
+							importFields = append(importFields, ident.Name)
+						}
+					}
+				}
+				return false
+			}
+			return true
+		})
+		if fieldContainsImport {
+			if !genImported {
+				continue
+			}
+		}
+	}
+	projectImportSpecs := make([]ast.Spec, 0)
+	if pkg.SliceContain(importFields, constants.ImportTime) {
+		spec := &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(constants.ImportTime),
 			},
-			&ast.ImportSpec{
-				Path: &ast.BasicLit{
-					Kind:  token.STRING,
-					Value: strconv.Quote(fmt.Sprintf("%s/gen/entschema", projectPath)),
-				},
-			},
-			&ast.ImportSpec{
-				Path: &ast.BasicLit{
-					Kind:  token.STRING,
-					Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, appPath)),
-				},
-			},
-			&ast.ImportSpec{
-				Path: &ast.BasicLit{
-					Kind:  token.STRING,
-					Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, factoriesPath)),
-				},
+		}
+		projectImportSpecs = append(projectImportSpecs, spec)
+	}
+
+	secondSpecs := []ast.Spec{
+		&ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote("github.com/bxcodec/faker"),
 			},
 		},
+		&ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(fmt.Sprintf("%s/gen/entschema", projectPath)),
+			},
+		},
+		&ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, appPath)),
+			},
+		},
+		&ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, factoriesPath)),
+			},
+		},
+	}
+
+	projectImportSpecs = append(projectImportSpecs, secondSpecs...)
+	endPoints := strings.Split(modelPath, "/")
+	var modelPathEndPoint string
+	if len(endPoints) == 1 {
+		modelPathEndPoint = endPoints[0]
+	} else {
+		modelPathEndPoint = endPoints[len(endPoints)-1]
+	}
+	if pkg.SliceContain(importFields, modelPathEndPoint) {
+		spec := &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, modelPath)),
+			},
+		}
+		projectImportSpecs = append(projectImportSpecs, spec)
+	}
+	importDecl1 := &ast.GenDecl{
+		Tok:   token.IMPORT,
+		Specs: projectImportSpecs,
 	}
 	astOut.Decls = append([]ast.Decl{importDecl1}, astOut.Decls...)
 }
