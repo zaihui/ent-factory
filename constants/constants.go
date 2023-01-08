@@ -11,5 +11,7 @@ var (
 	DefaultAppPath       = "service/app"
 	DefaultFactoryPath   = "factories"
 	DefaultEntClientName = "EntClient"
+	DefaultModelPath     = "spec/schema"
+	ImportTime           = "time"
 	IgnoreFolderNames    = []string{"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime"}
 )

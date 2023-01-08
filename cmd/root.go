@@ -38,6 +38,7 @@ func init() {
 		"factoriesPath", "t", "", "the relative path of these factories located in this project")
 	rootCmd.PersistentFlags().StringP("appPath", "a", "", "the relative path of app client")
 	rootCmd.PersistentFlags().StringP("entClientName", "e", "", "the name of ent client")
+	rootCmd.PersistentFlags().StringP("modelPath", "m", "", "the path of the definition of models")
 }
 
 func Fatal(msg string) {
