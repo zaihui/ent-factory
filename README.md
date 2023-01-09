@@ -6,7 +6,8 @@ A Golang Factory Code Generation Command Tool For Ent.
 ## Function
 Simplify the process of creating mock model objects for ent schema. 
 - Auto reading the struct of ent model schemas to create factory functions.
-  - generate the imported field in default
+  - Support build-in type and imported type field
+  - PS: it will generate the imported type fields in default
 - Auto fake data for each field as default.
 - Allow self define the value of any field independently.
 
