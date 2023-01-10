@@ -13,5 +13,8 @@ var (
 	DefaultEntClientName = "EntClient"
 	DefaultModelPath     = "spec/schema"
 	ImportTime           = "time"
-	IgnoreFolderNames    = []string{"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime"}
+	IgnoreFolderNames    = []string{
+		"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime",
+		"schema",
+	} // schema is the old version(0.10.X) ent generated
 )
