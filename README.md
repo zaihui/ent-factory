@@ -1,5 +1,6 @@
 # Ent Factory
 [![CI](https://github.com/zaihui/ent-factory/workflows/CI/badge.svg)](https://github.com/zaihui/ent-factory)
+![Golang](https://img.shields.io/badge/Golang-1.18%7C1.19-blue)
 
 A Golang Factory Code Generation Command Tool For Ent.
 
@@ -44,8 +45,8 @@ Simplify the process of creating mock model objects for ent schema.
 
 ## Requirement
 - Golang 1.18+
-- [Ent](entgo.io/ent) 0.10.0 - 0.11.4
-- [Faker](github.com/bxcodec/faker) 2.0
+- [Ent](https://entgo.io) 0.10.0 - 0.11.4
+- [Faker](https://github.com/bxcodec/faker) 2.0
 ## How to install
 ### Install
 ```bash
