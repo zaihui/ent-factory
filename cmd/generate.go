@@ -33,7 +33,7 @@ func init() {
 //nolint:gocognit,cyclop // fix it later
 func GenerateFactories(cmd *cobra.Command, _ []string) {
 	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite, modelPath,
-		err := ExtraFlags(cmd)
+		genImportFields, err := ExtraFlags(cmd)
 	if err != nil {
 		fail(err.Error())
 	}
@@ -67,7 +67,7 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 		schemaName := ExtraNameFromSchemaFilePath(schemaFile)
 		realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, schemaName, schemaName)
 		CreateOneFactory(schemaFile, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-			modelPath, outputPath)
+			modelPath, outputPath, genImportFields)
 		return
 	}
 	files, err := f.Readdir(0)
@@ -94,13 +94,13 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 				continue
 			} else if os.IsNotExist(err) {
 				CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-					modelPath, outputPath)
+					modelPath, outputPath, genImportFields)
 			} else {
 				fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
 			}
 		} else {
 			CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-				modelPath, outputPath)
+				modelPath, outputPath, genImportFields)
 		}
 	}
 }
@@ -121,10 +121,10 @@ func ExtraNameFromSchemaFilePath(schemaFile string) string {
 }
 
 func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-	modelPath, outputPath string,
+	modelPath, outputPath string, genImportFields bool,
 ) {
 	outReader, err := RunGenerate(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath,
-		entClientName, modelPath)
+		entClientName, modelPath, genImportFields)
 	if err != nil {
 		fail(err.Error())
 	}
@@ -188,7 +188,10 @@ func CreatePathAndCommonFile(commonPath string, outputPath string) {
 	}
 }
 
-func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, string, string, bool, string, error) {
+//nolint:funlen,cyclop // have to
+func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, string, string, bool, string, bool,
+	error,
+) {
 	schemaFile, err := cmd.Flags().GetString("schemaFile")
 	if err != nil {
 		Fatalf("get schema file failed: %v\n", err)
@@ -244,8 +247,12 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 	if modelPath == "" {
 		modelPath = constants.DefaultModelPath
 	}
+	genImportFields, err := cmd.Flags().GetBool("genImportFields")
+	if err != nil {
+		Fatalf("get genImportFields failed: %v\n", err)
+	}
 	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite,
-		modelPath, err
+		modelPath, genImportFields, err
 }
 
 func fail(msg string) {
@@ -260,7 +267,7 @@ func fail(msg string) {
 
 // RunGenerate ===== generate one factory schema =======.
 func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesPath, appPath, entClientName,
-	modelPath string) (
+	modelPath string, genImportFields bool) (
 	io.Reader, error,
 ) {
 	// Read input file
@@ -290,7 +297,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 	astOut := &ast.File{Name: ast.NewIdent(packageName)}
 
 	// Add import
-	getImportDef(astOut, structType, true, true, projectPath, factoriesPath, appPath, modelPath)
+	getImportDef(astOut, structType, true, genImportFields, projectPath, factoriesPath, appPath, modelPath)
 
 	// Add type definition for functional option function signature
 	withTypeDef(astOut, fnTypeIdent, fnParamType)
@@ -303,7 +310,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 		fnParamType,
 		false,
 		true,
-		true,
+		genImportFields,
 		constants.SkipStructFields); err != nil {
 		return nil, err
 	}

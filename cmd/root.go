@@ -39,6 +39,7 @@ func init() {
 	rootCmd.PersistentFlags().StringP("appPath", "a", "", "the relative path of app client")
 	rootCmd.PersistentFlags().StringP("entClientName", "e", "", "the name of ent client")
 	rootCmd.PersistentFlags().StringP("modelPath", "m", "", "the path of the definition of models")
+	rootCmd.PersistentFlags().BoolP("genImportFields", "i", false, "whether generate import fields")
 }
 
 func Fatal(msg string) {
