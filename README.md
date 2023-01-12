@@ -14,11 +14,11 @@ Simplify the process of creating mock model objects for ent schema.
 
 ## Todo
 - [ ] Better Format
-  - Add A Blank Space Between With Functions. It's tricky, because printer rules against gofmt rules.
-  - Import Sort by fmt rules
-- [ ] Generate imported fields have a switch to control
+  - [ ]Add A Blank Space Between With Functions. It's tricky, because printer rules against gofmt rules.
+  - [ ]Import Sort by fmt rules
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
+- [X] ~~Generate imported fields have a switch to control~~
 - [X] ~~Auto Format Code~~
 - [X] ~~Support Time Optional Function~~
 - [X] ~~Support Json Field Optional Function~~
@@ -79,6 +79,9 @@ go install github.com/zaihui/ent-factory@latest
 - entClientName
   - the name of ent client, means `appPath.entClientName`
   - the default value is `EntClient`
+- genImportFields
+  - the bool value to set whether generate those imported fields of the models
+  - the default value is `true`
 #### Makefile Command
 > CAUTION!: This Command will **NOT** regenerate every factory based on the current struct of table.
 > 

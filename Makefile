@@ -28,6 +28,7 @@ migrations:
 
 self_test:
 	go build .
-	./ent-factory generate --schemaPath gen/entschema --outputPath factories --projectPath github.com/zaihui/ent-factory --overwrite true
+	rm factories/testfactory/testfactory.go
+	./ent-factory generate --schemaPath gen/entschema  --outputPath factories --projectPath github.com/zaihui/ent-factory --overwrite=true --genImportFields=true
 	rm ent-factory
 
