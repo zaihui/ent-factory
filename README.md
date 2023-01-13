@@ -44,7 +44,7 @@ Simplify the process of creating mock model objects for ent schema.
 ```
 
 ## Requirement
-- Golang 1.18+
+- Golang 1.18～1.19
 - [Ent](https://entgo.io) 0.10.0 - 0.11.4
 - [Faker](https://github.com/bxcodec/faker) 2.0
 ## How to install
