@@ -18,6 +18,7 @@ Simplify the process of creating mock model objects for ent schema.
   - [ ]Import Sort by fmt rules
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
+- [ ] A CI config for self generating in CI/CD
 - [X] ~~Generate imported fields have a switch to control~~
 - [X] ~~Auto Format Code~~
 - [X] ~~Support Time Optional Function~~
