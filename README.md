@@ -14,11 +14,12 @@ Simplify the process of creating mock model objects for ent schema.
 
 ## Todo
 - [ ] Better Format
-  - [ ]Add A Blank Space Between With Functions. It's tricky, because printer rules against gofmt rules.
+  - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
   - [ ]Import Sort by fmt rules
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
 - [ ] A CI config for self generating in CI/CD
+- [X] ~~Add documents for each function~~
 - [X] ~~Generate imported fields have a switch to control~~
 - [X] ~~Auto Format Code~~
 - [X] ~~Support Time Optional Function~~

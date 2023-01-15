@@ -341,6 +341,8 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 }
 
 // NewFunc Create the New instance function.
+//
+//nolint:funlen // have to right now
 func NewFunc(astOut *ast.File,
 	paramTypeName string,
 	structType *ast.TypeSpec,
@@ -367,6 +369,12 @@ func NewFunc(astOut *ast.File,
 	dataResIndent := ast.NewIdent("data")
 	dataResPosIndent := ast.NewIdent("&data")
 	newFunc := &ast.FuncDecl{
+		Doc: &ast.CommentGroup{List: []*ast.Comment{
+			{
+				Text: fmt.Sprintf("// %s function for creating one %s instance.",
+					constants.FactoryNewFuncName, structType.Name),
+			},
+		}},
 		Name: ast.NewIdent(constants.FactoryNewFuncName),
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
@@ -526,9 +534,7 @@ func withFunc(
 	if !ok {
 		panic("bad type for struct type")
 	}
-
 	var numFnsAdded int
-
 	// Look at fields. Each entry in list is actually a list: could be embedded
 	// field (length 0), "regular" field (length 1), or multiple named fields
 	// with same type (length > 1).
@@ -541,7 +547,6 @@ func withFunc(
 				return constants.ErrDisableAllowed
 			}
 		}
-
 		// No fields whose type is imported from another package
 		// todo 判断import，返回
 		var fieldContainsImport bool
@@ -558,7 +563,6 @@ func withFunc(
 				continue
 			}
 		}
-
 		// Now that we're operating on non-imported types and non-embedded
 		// fields, let's look at each actual field name and generate a setter
 		// for it.
@@ -570,10 +574,16 @@ func withFunc(
 			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
 				continue
 			}
-
 			outerParamIdent := ast.NewIdent(withFirstCharLower(fieldName.Name) + "Gen")
+			functionName := "Set" + withFirstCharUpper(fieldName.Name)
 			newFunc := &ast.FuncDecl{
-				Name: ast.NewIdent("Set" + withFirstCharUpper(fieldName.Name)),
+				Doc: &ast.CommentGroup{List: []*ast.Comment{
+					{
+						Text: fmt.Sprintf("// %s Function Optional func for %s.",
+							functionName, withFirstCharUpper(fieldName.Name)),
+					},
+				}},
+				Name: ast.NewIdent(functionName),
 				Type: &ast.FuncType{
 					Params: &ast.FieldList{
 						List: []*ast.Field{
@@ -606,11 +616,9 @@ func withFunc(
 			numFnsAdded++
 		}
 	}
-
 	if numFnsAdded == 0 {
 		return constants.ErrNoFiled
 	}
-
 	return nil
 }
 
