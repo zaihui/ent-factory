@@ -1,5 +1,6 @@
 # Ent Factory
 [![CI](https://github.com/zaihui/ent-factory/workflows/CI/badge.svg)](https://github.com/zaihui/ent-factory)
+[![Maintainability](https://api.codeclimate.com/v1/badges/0f7322740bcbc6d7c2dd/maintainability)](https://codeclimate.com/github/zaihui/ent-factory/maintainability)
 ![Golang](https://img.shields.io/badge/Golang-1.18%7C1.19-blue)
 
 A Model Instance Factory Code Generation Tool For Ent Go.
