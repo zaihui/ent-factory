@@ -2,7 +2,7 @@
 [![CI](https://github.com/zaihui/ent-factory/workflows/CI/badge.svg)](https://github.com/zaihui/ent-factory)
 ![Golang](https://img.shields.io/badge/Golang-1.18%7C1.19-blue)
 
-A Golang Factory Code Generation Command Tool For Ent.
+A Model Instance Factory Code Generation Tool For Ent Go.
 
 ## Function
 Simplify the process of creating mock model objects for ent schema. 
