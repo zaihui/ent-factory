@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -149,6 +150,13 @@ func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factori
 	}
 
 	if _, err := io.Copy(dest, outReader); err != nil {
+		fail(err.Error())
+	}
+	cmd := exec.Command("goimports", "-w", realOutPutPath)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err = cmd.Run()
+	if err != nil {
 		fail(err.Error())
 	}
 }
