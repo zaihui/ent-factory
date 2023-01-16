@@ -31,44 +31,29 @@ func init() {
 	rootCmd.AddCommand(cmd)
 }
 
-//nolint:gocognit,cyclop // fix it later
+//nolint:cyclop // fix it later
 func GenerateFactories(cmd *cobra.Command, _ []string) {
 	schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite, modelPath,
 		genImportFields, err := ExtraFlags(cmd)
 	if err != nil {
 		fail(err.Error())
 	}
-	if schemaFile == "" && schemaPath == "" {
-		Fatalf("schema file and schema path must give at lease one")
-	}
-	if outputPath == "" {
-		Fatalf("output path cannot be empty")
-	}
 	f, err := os.Open(schemaPath)
 	if err != nil {
 		fail(err.Error())
 	}
+	defer f.Close()
 
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			fail(err.Error())
-		}
-	}(f)
 	commonPath := fmt.Sprintf("%s/common.go", outputPath)
 	_, err = os.Stat(commonPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			CreatePathAndCommonFile(commonPath, outputPath)
-		} else {
-			fail(err.Error())
-		}
+	if err != nil && os.IsNotExist(err) {
+		CreatePathAndCommonFile(commonPath, outputPath)
+	} else if err != nil {
+		fail(err.Error())
 	}
 	if schemaFile != "" && schemaPath == "" {
-		schemaName := ExtraNameFromSchemaFilePath(schemaFile)
-		realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, schemaName, schemaName)
-		CreateOneFactory(schemaFile, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
-			modelPath, outputPath, genImportFields)
+		GenerateFactoryForOneFile(schemaFile, outputPath, projectPath, factoriesPath, appPath, entClientName,
+			modelPath, genImportFields)
 		return
 	}
 	files, err := f.Readdir(0)
@@ -90,13 +75,14 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 		}
 		realPath, realOutPutPath := GetRealPathAndFilePath(schemaPath, v, outputPath)
 		if !overWrite {
-			//nolint:gocritic // no way to rewrite, because of the os.IsNotExist is not a case
-			if _, err := os.Stat(realOutPutPath); err == nil {
+			_, err := os.Stat(realOutPutPath)
+			switch {
+			case err == nil:
 				continue
-			} else if os.IsNotExist(err) {
+			case os.IsNotExist(err):
 				CreateOneFactory(realPath, v.Name(), realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
 					modelPath, outputPath, genImportFields)
-			} else {
+			default:
 				fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
 			}
 		} else {
@@ -104,6 +90,16 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 				modelPath, outputPath, genImportFields)
 		}
 	}
+}
+
+// GenerateFactoryForOneFile only for one model file.
+func GenerateFactoryForOneFile(schemaFile string, outputPath string, projectPath string, factoriesPath string,
+	appPath string, entClientName string, modelPath string, genImportFields bool,
+) {
+	schemaName := ExtraNameFromSchemaFilePath(schemaFile)
+	realOutPutPath := fmt.Sprintf("%s/%sfactory/%sfactory.go", outputPath, schemaName, schemaName)
+	CreateOneFactory(schemaFile, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
+		modelPath, outputPath, genImportFields)
 }
 
 func GetRealPathAndFilePath(schemaPath string, v os.FileInfo, outputPath string) (string, string) {
@@ -121,6 +117,7 @@ func ExtraNameFromSchemaFilePath(schemaFile string) string {
 	return schemaName
 }
 
+// CreateOneFactory create one factory.
 func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factoriesPath, appPath, entClientName,
 	modelPath, outputPath string, genImportFields bool,
 ) {
@@ -130,17 +127,18 @@ func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factori
 		fail(err.Error())
 	}
 	var dest io.Writer
-	//nolint:nestif // need it
-	if outputPath == "" {
+	switch {
+	case outputPath == "":
 		dest = os.Stdout
-	} else {
+	default:
 		_, err := os.Stat(filepath.Dir(realOutPutPath))
-		if os.IsNotExist(err) {
+		switch {
+		case os.IsNotExist(err):
 			err2 := os.MkdirAll(filepath.Dir(realOutPutPath), os.FileMode(constants.Perm))
 			if err2 != nil {
 				fail(err2.Error())
 			}
-		} else if err != nil {
+		case !os.IsNotExist(err) && err != nil:
 			fail(err.Error())
 		}
 		dest, err = os.OpenFile(realOutPutPath, os.O_RDWR|os.O_CREATE, os.FileMode(constants.Perm))
@@ -148,7 +146,6 @@ func CreateOneFactory(realPath, schemaName, realOutPutPath, projectPath, factori
 			fail(err.Error())
 		}
 	}
-
 	if _, err := io.Copy(dest, outReader); err != nil {
 		fail(err.Error())
 	}
@@ -259,6 +256,12 @@ func ExtraFlags(cmd *cobra.Command) (string, string, string, string, string, str
 	if err != nil {
 		Fatalf("get genImportFields failed: %v\n", err)
 	}
+	if schemaFile == "" && schemaPath == "" {
+		Fatalf("schema file and schema path must give at lease one")
+	}
+	if outputPath == "" {
+		Fatalf("output path cannot be empty")
+	}
 	return schemaFile, outputPath, schemaPath, projectPath, factoriesPath, appPath, entClientName, overWrite,
 		modelPath, genImportFields, err
 }
@@ -341,7 +344,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 	if err := printer.Fprint(out, token.NewFileSet(), astOut); err != nil {
 		return nil, err
 	}
-	res, err := formatCode(out)
+	res, err := pkg.FormatCode(out)
 	if err != nil {
 		return nil, err
 	}
@@ -349,8 +352,6 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 }
 
 // NewFunc Create the New instance function.
-//
-//nolint:funlen // have to right now
 func NewFunc(astOut *ast.File,
 	paramTypeName string,
 	structType *ast.TypeSpec,
@@ -360,22 +361,9 @@ func NewFunc(astOut *ast.File,
 	skipStructFields map[string]struct{},
 	entClient string,
 ) error {
-	// func params
-	suiteIndent := ast.NewIdent(constants.SuiteCaseVariable)
-	suiteNoErrIndent := ast.NewIdent(fmt.Sprintf("%v.%v", constants.SuiteCaseVariable, constants.SuiteNoErrorFunc))
-	optsIndent := ast.NewIdent("opts")
-	testCaseIndent := ast.NewIdent(constants.SuiteCaseType)
-	EllipsisIndent := ast.NewIdent(fmt.Sprintf("...%s", fnIdent.Name))
-	// return params
-	returnIndent := ast.NewIdent(fmt.Sprintf("%v.%s", entClient, structType.Name))
-	// process params
-	dataIndent := ast.NewIdent(fmt.Sprintf("%s{}", paramTypeName))
-	optKeyIndent := ast.NewIdent("_")
-	optValueIndent := ast.NewIdent("opt")
-	// serializer params
-	fakerIndent := ast.NewIdent(constants.FakeDataFunc)
-	dataResIndent := ast.NewIdent("data")
-	dataResPosIndent := ast.NewIdent("&data")
+	suiteIndent, suiteNoErrIndent, optsIndent, testCaseIndent, EllipsisIndent, returnIndent, dataIndent, optKeyIndent,
+		optValueIndent, fakerIndent, dataResIndent, dataResPosIndent := CreateIndentForNewFunc(fnIdent, entClient,
+		structType, paramTypeName)
 	newFunc := &ast.FuncDecl{
 		Doc: &ast.CommentGroup{List: []*ast.Comment{
 			{
@@ -459,6 +447,30 @@ func NewFunc(astOut *ast.File,
 	return nil
 }
 
+func CreateIndentForNewFunc(fnIdent *ast.Ident, entClient string, structType *ast.TypeSpec,
+	paramTypeName string) (*ast.Ident, *ast.Ident, *ast.Ident, *ast.Ident, *ast.Ident, *ast.Ident,
+	*ast.Ident, *ast.Ident, *ast.Ident, *ast.Ident, *ast.Ident, *ast.Ident,
+) {
+	// func params
+	suiteIndent := ast.NewIdent(constants.SuiteCaseVariable)
+	suiteNoErrIndent := ast.NewIdent(fmt.Sprintf("%v.%v", constants.SuiteCaseVariable, constants.SuiteNoErrorFunc))
+	optsIndent := ast.NewIdent("opts")
+	testCaseIndent := ast.NewIdent(constants.SuiteCaseType)
+	EllipsisIndent := ast.NewIdent(fmt.Sprintf("...%s", fnIdent.Name))
+	// return params
+	returnIndent := ast.NewIdent(fmt.Sprintf("%v.%s", entClient, structType.Name))
+	// process params
+	dataIndent := ast.NewIdent(fmt.Sprintf("%s{}", paramTypeName))
+	optKeyIndent := ast.NewIdent("_")
+	optValueIndent := ast.NewIdent("opt")
+	// serializer params
+	fakerIndent := ast.NewIdent(constants.FakeDataFunc)
+	dataResIndent := ast.NewIdent("data")
+	dataResPosIndent := ast.NewIdent("&data")
+	return suiteIndent, suiteNoErrIndent, optsIndent, testCaseIndent, EllipsisIndent, returnIndent, dataIndent,
+		optKeyIndent, optValueIndent, fakerIndent, dataResIndent, dataResPosIndent
+}
+
 // withTypeDef makes a type definition declaration for the functional option
 // function type and adds it to astOut.
 func withTypeDef(astOut *ast.File, fnIdent *ast.Ident, paramType *ast.StarExpr) {
@@ -521,9 +533,9 @@ func funcTypeIdent(structName string, exportFnType bool) *ast.Ident {
 	const nameF = "%sFieldSetter"
 	var casedStructName string
 	if exportFnType {
-		casedStructName = withFirstCharUpper(structName)
+		casedStructName = pkg.WithFirstCharUpper(structName)
 	} else {
-		casedStructName = withFirstCharLower(structName)
+		casedStructName = pkg.WithFirstCharLower(structName)
 	}
 	return ast.NewIdent(fmt.Sprintf(nameF, casedStructName))
 }
@@ -556,7 +568,6 @@ func withFunc(
 			}
 		}
 		// No fields whose type is imported from another package
-		// todo 判断import，返回
 		var fieldContainsImport bool
 		ast.Inspect(field, func(n ast.Node) bool {
 			_, ok := n.(*ast.SelectorExpr)
@@ -582,13 +593,13 @@ func withFunc(
 			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
 				continue
 			}
-			outerParamIdent := ast.NewIdent(withFirstCharLower(fieldName.Name) + "Gen")
-			functionName := "Set" + withFirstCharUpper(fieldName.Name)
+			outerParamIdent := ast.NewIdent(pkg.WithFirstCharLower(fieldName.Name) + "Gen")
+			functionName := "Set" + pkg.WithFirstCharUpper(fieldName.Name)
 			newFunc := &ast.FuncDecl{
 				Doc: &ast.CommentGroup{List: []*ast.Comment{
 					{
 						Text: fmt.Sprintf("// %s Function Optional func for %s.",
-							functionName, withFirstCharUpper(fieldName.Name)),
+							functionName, pkg.WithFirstCharUpper(fieldName.Name)),
 					},
 				}},
 				Name: ast.NewIdent(functionName),
@@ -636,7 +647,7 @@ func getInnerFn(
 	structTypeIdent, fieldIdent, outerParamIdent *ast.Ident,
 	innerParamType *ast.StarExpr,
 ) *ast.FuncLit {
-	paramIdent := ast.NewIdent(withFirstCharLower(structTypeIdent.Name) + "Gen")
+	paramIdent := ast.NewIdent(pkg.WithFirstCharLower(structTypeIdent.Name) + "Gen")
 	return &ast.FuncLit{
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{
@@ -718,7 +729,7 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 			}
 
 			IndentString = IndentString + getSetStr(fieldName) +
-				withFirstCharUpper(fieldName.Name) + "(data." + fieldName.Name + ")"
+				pkg.WithFirstCharUpper(fieldName.Name) + "(data." + fieldName.Name + ")"
 		}
 	}
 	IndentString = "Create()" + IndentString + ".\n\tSaveX(s.Context())"
@@ -766,15 +777,14 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded,
 		var fieldContainsImport bool
 		ast.Inspect(field, func(n ast.Node) bool {
 			sel, ok := n.(*ast.SelectorExpr)
-			//nolint:nestif // have to
-			if ok {
+			switch {
+			case ok:
 				fieldContainsImport = true
-				if genImported {
-					ident, ok := sel.X.(*ast.Ident)
-					if ok {
-						if !pkg.SliceContain(importFields, ident.Name) {
-							importFields = append(importFields, ident.Name)
-						}
+			case ok && genImported:
+				ident, ok := sel.X.(*ast.Ident)
+				if ok {
+					if !pkg.SliceContain(importFields, ident.Name) {
+						importFields = append(importFields, ident.Name)
 					}
 				}
 				return false
@@ -797,7 +807,6 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded,
 		}
 		projectImportSpecs = append(projectImportSpecs, spec)
 	}
-
 	secondSpecs := []ast.Spec{
 		&ast.ImportSpec{
 			Path: &ast.BasicLit{
@@ -847,31 +856,4 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded,
 		Specs: projectImportSpecs,
 	}
 	astOut.Decls = append([]ast.Decl{importDecl1}, astOut.Decls...)
-}
-
-func withFirstCharLower(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToLower(s[0:1]) + s[1:]
-}
-
-func withFirstCharUpper(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToUpper(s[0:1]) + s[1:]
-}
-
-func formatCode(buf *bytes.Buffer) (*bytes.Buffer, error) {
-	code, err := io.ReadAll(buf)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read code from buffer: %w", err)
-	}
-
-	formattedCode, err := format.Source(code)
-	if err != nil {
-		return nil, fmt.Errorf("failed to format code: %w", err)
-	}
-	return bytes.NewBuffer(formattedCode), nil
 }

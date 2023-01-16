@@ -1,7 +1,10 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
+	"go/format"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -34,4 +37,31 @@ func SliceContain(iterableType interface{}, value interface{}) bool {
 	}
 
 	return false
+}
+
+func WithFirstCharLower(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToLower(s[0:1]) + s[1:]
+}
+
+func WithFirstCharUpper(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[0:1]) + s[1:]
+}
+
+func FormatCode(buf *bytes.Buffer) (*bytes.Buffer, error) {
+	code, err := io.ReadAll(buf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read code from buffer: %w", err)
+	}
+
+	formattedCode, err := format.Source(code)
+	if err != nil {
+		return nil, fmt.Errorf("failed to format code: %w", err)
+	}
+	return bytes.NewBuffer(formattedCode), nil
 }
