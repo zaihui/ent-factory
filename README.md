@@ -13,12 +13,14 @@ Simplify the process of creating mock model objects for ent schema.
 - Allow self define the value of any field independently.
 
 ## Todo
-- [ ] Better Format
-  - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
-  - [ ]Import Sort by fmt rules
+- [ ] Provide Setter For No ReadOnly Imported Fields
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
+- [ ] Code Lint Fix
 - [ ] A CI config for self generating in CI/CD
+- [X] ~~Better Format~~
+  - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
+  - [X] ~~Import Sort by fmt rules. (Fix by exec.Command)~~
 - [X] ~~Add documents for each function~~
 - [X] ~~Generate imported fields have a switch to control~~
 - [X] ~~Auto Format Code~~
@@ -52,6 +54,7 @@ Simplify the process of creating mock model objects for ent schema.
 ## How to install
 ### Install
 ```bash
+go install golang.org/x/tools/cmd/goimports@latest
 go install github.com/zaihui/ent-factory@latest
 ```
 ### Setup
