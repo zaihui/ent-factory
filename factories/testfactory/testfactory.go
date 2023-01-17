@@ -239,22 +239,34 @@ func New(s factories.TestSuite, opts ...TestFieldSetter) *entschema.Test {
 	return app.EntClient.Test.Create().
 		SetID(data.ID).
 		SetUID(data.UID).
+		SetCreatedAt(time.Now()).
+		SetUpdatedAt(time.Now()).
+		SetNillableDeactivatedAt(nil).
 		SetName(data.Name).
 		SetEnableTakeaway(data.EnableTakeaway).
 		SetPhone(data.Phone).
 		SetAnnouncement(data.Announcement).
 		SetEnableAutoAccept(data.EnableAutoAccept).
+		SetDeliveryConfigs(data.DeliveryConfigs).
+		SetPayConfigs(data.PayConfigs).
 		SetNillablePrintTimes(data.PrintTimes).
+		SetRingConfigs(data.RingConfigs).
 		SetBusinessGroupID(data.BusinessGroupID).
 		SetBusinessGroupUID(data.BusinessGroupUID).
 		SetDishCategories(data.DishCategories).
+		SetEndOfTakeaway(time.Now()).
 		SetMode(data.Mode).
+		SetSelfPickupConfigs(data.SelfPickupConfigs).
 		SetServerID(data.ServerID).
 		SetImage(data.Image).
 		SetAddress(data.Address).
 		SetLatitude(data.Latitude).
 		SetLongitude(data.Longitude).
+		SetBanners(data.Banners).
 		SetSort(data.Sort).
 		SetPayMode(data.PayMode).
+		SetDineInConfigs(data.DineInConfigs).
+		SetDealsConfig(data.DealsConfig).
+		SetPrintConfig(data.PrintConfig).
 		SaveX(s.Context())
 }
