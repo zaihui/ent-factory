@@ -16,11 +16,11 @@ Simplify the process of creating mock model objects for ent schema.
 - Allow self define the value of any field independently.
 
 ## Todo
-- [ ] Provide Setter For No ReadOnly Imported Fields
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
-- [ ] Code Lint Fix
+- [ ] Code Lint Fix [WIP]
 - [ ] A CI config for self generating in CI/CD
+- [X] ~~Provide Setter For No ReadOnly Imported Fields~~
 - [X] ~~Better Format~~
   - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
   - [X] ~~Import Sort by fmt rules. (Fix by exec.Command)~~
