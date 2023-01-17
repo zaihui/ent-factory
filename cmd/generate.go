@@ -336,6 +336,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath, projectPath, factoriesP
 		true,
 		constants.SkipStructFields,
 		entClientName,
+		genImportFields,
 	); err != nil {
 		return nil, err
 	}
@@ -360,6 +361,7 @@ func NewFunc(astOut *ast.File,
 	generateForUnexportedFields, ignoreUnsupported bool,
 	skipStructFields map[string]struct{},
 	entClient string,
+	genImportFields bool,
 ) error {
 	suiteIndent, suiteNoErrIndent, optsIndent, testCaseIndent, EllipsisIndent, returnIndent, dataIndent, optKeyIndent,
 		optValueIndent, fakerIndent, dataResIndent, dataResPosIndent := CreateIndentForNewFunc(fnIdent, entClient,
@@ -436,6 +438,7 @@ func NewFunc(astOut *ast.File,
 							structType,
 							generateForUnexportedFields,
 							ignoreUnsupported,
+							genImportFields,
 							skipStructFields,
 						),
 					},
@@ -547,7 +550,7 @@ func withFunc(
 	structType *ast.TypeSpec,
 	fnIdent *ast.Ident,
 	fnParamType *ast.StarExpr,
-	generateForUnexportedFields, ignoreEmbedded, genImportedField bool,
+	generateForUnexportedFields, ignoreEmbedded, genImportFields bool,
 	skipStructFields map[string]struct{},
 ) error {
 	structTypeTyped, ok := structType.Type.(*ast.StructType)
@@ -578,7 +581,7 @@ func withFunc(
 			return true
 		})
 		if fieldContainsImport {
-			if !genImportedField {
+			if !genImportFields {
 				continue
 			}
 		}
@@ -678,8 +681,9 @@ func getInnerFn(
 	}
 }
 
+//nolint:gocognit // fix it later
 func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generateForUnexportedFields,
-	ignoreUnsupported bool, skipStructFields map[string]struct{},
+	ignoreEmbedded, genImportFields bool, skipStructFields map[string]struct{},
 ) *ast.SelectorExpr {
 	structTypeTyped, ok := structType.Type.(*ast.StructType)
 	if !ok {
@@ -690,7 +694,7 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 	for _, field := range structTypeTyped.Fields.List {
 		// No embedded fields
 		if len(field.Names) == 0 {
-			if ignoreUnsupported {
+			if ignoreEmbedded {
 				continue
 			} else {
 				panic("embedded fields disallowed")
@@ -699,19 +703,24 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 
 		// No fields whose type is imported from another package
 		var fieldContainsImport bool
+		identName := ""
 		ast.Inspect(field, func(n ast.Node) bool {
-			_, ok := n.(*ast.SelectorExpr)
+			sel, ok := n.(*ast.SelectorExpr)
 			if ok {
 				fieldContainsImport = true
+			}
+			if ok && genImportFields {
+				ident, ok := sel.X.(*ast.Ident)
+				if ok {
+					identName = ident.Name
+				}
 				return false
 			}
 			return true
 		})
 		if fieldContainsImport {
-			if ignoreUnsupported {
+			if !genImportFields {
 				continue
-			} else {
-				panic("cannot generate for fields whose type is imported")
 			}
 		}
 
@@ -727,9 +736,10 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
 				continue
 			}
-
-			IndentString = IndentString + getSetStr(fieldName) +
-				pkg.WithFirstCharUpper(fieldName.Name) + "(data." + fieldName.Name + ")"
+			// set value for time do a special default
+			setterStr, valueName := getSetStrAndValueName(fieldName, fieldContainsImport, identName)
+			IndentString = IndentString + setterStr +
+				pkg.WithFirstCharUpper(fieldName.Name) + "(" + valueName + ")"
 		}
 	}
 	IndentString = "Create()" + IndentString + ".\n\tSaveX(s.Context())"
@@ -740,20 +750,27 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 	return &res
 }
 
-func getSetStr(ident *ast.Ident) string {
+func getSetStrAndValueName(ident *ast.Ident, fieldContainsImport bool, identName string) (string, string) {
 	setStr := ".\n\tSet"
+	valueName := fmt.Sprintf("data.%s", ident.Name)
+	if fieldContainsImport && identName == constants.ImportTime {
+		valueName = "time.Now()"
+	}
 	if ident.Obj == nil {
-		return setStr
+		return setStr, valueName
 	}
 	decl, ok := ident.Obj.Decl.(*ast.Field)
 	if !ok {
-		return setStr
+		return setStr, valueName
 	}
 	_, ok = decl.Type.(*ast.StarExpr)
 	if ok {
 		setStr = ".\n\tSetNillable"
+		if fieldContainsImport && identName == constants.ImportTime {
+			valueName = "nil"
+		}
 	}
-	return setStr
+	return setStr, valueName
 }
 
 //nolint:gocognit // refactor later
@@ -777,10 +794,10 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded,
 		var fieldContainsImport bool
 		ast.Inspect(field, func(n ast.Node) bool {
 			sel, ok := n.(*ast.SelectorExpr)
-			switch {
-			case ok:
+			if ok {
 				fieldContainsImport = true
-			case ok && genImported:
+			}
+			if ok && genImported {
 				ident, ok := sel.X.(*ast.Ident)
 				if ok {
 					if !pkg.SliceContain(importFields, ident.Name) {
