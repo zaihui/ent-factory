@@ -91,7 +91,7 @@ go install github.com/zaihui/ent-factory@latest
   - the bool value to set whether generate those imported fields of the models
   - the default value is `true`
 #### Makefile Command
-> CAUTION!: This Command will **NOT** regenerate every factory based on the current struct of table.
+> CAUTION!: This Command will **NOT** regenerate every factory based on the current struct of table in default.
 > 
 > If you want to **Regenerate**, please use the `overwrite` flag. Or delete what you want to regenerate then use this 
 > command.
@@ -166,15 +166,15 @@ import (
 	your_location_of_factories/booktableorderfactory
 )
 // s is an instance of test suite
-booktableorderfactory.new(s) 
+order := booktableorderfactory.new(s) 
 // if you want to customize the value of a field, eg. UID
-booktableorderfactory.new(s, booktableorderfactory.SetUID("your uid"))
+order2: = booktableorderfactory.new(s, booktableorderfactory.SetUID("your uid"))
 ```
 
 ## Special Thank
 Special Thanks splunk. The part of codegen about function optional pattern is based on this [project](https://github.com/splunk/go-generate-builder-opts) from splunk.
 
-I edit some logic of it to implement my need, so I haven't imported it as a package to use it.
+I edit some logic of it to implement my reqirements, so I haven't imported it as a package to use it.
 
 ## How to contribute
 ### Process
