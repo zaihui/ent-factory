@@ -10,7 +10,7 @@ var (
 	Perm                 = 0o777
 	DefaultAppPath       = "service/app"
 	DefaultFactoryPath   = "factories"
-	DefaultEntClientName = "EntClient"
+	DefaultEntClientName = "app.EntClient"
 	DefaultModelPath     = "spec/schema"
 	ImportTime           = "time"
 	IgnoreFolderNames    = []string{
