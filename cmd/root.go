@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/zaihui/ent-factory/constants"
+
 	"github.com/spf13/cobra"
 )
 
@@ -35,10 +37,10 @@ func init() {
 	rootCmd.PersistentFlags().StringP("projectPath", "j", "", "the relative path of this project")
 	rootCmd.PersistentFlags().BoolP("overwrite", "r", false, "whether overwrite exist files")
 	rootCmd.PersistentFlags().StringP(
-		"factoriesPath", "t", "", "the relative path of these factories located in this project")
-	rootCmd.PersistentFlags().StringP("appPath", "a", "", "the relative path of app client")
-	rootCmd.PersistentFlags().StringP("entClientName", "e", "", "the name of ent client")
-	rootCmd.PersistentFlags().StringP("modelPath", "m", "", "the path of the definition of models")
+		"factoriesPath", "t", constants.DefaultFactoryPath, "the relative path of these factories located in this project")
+	rootCmd.PersistentFlags().StringP("appPath", "a", constants.DefaultAppPath, "the relative path of app client")
+	rootCmd.PersistentFlags().StringP("entClientName", "e", constants.DefaultEntClientName, "the name of ent client")
+	rootCmd.PersistentFlags().StringP("modelPath", "m", constants.DefaultModelPath, "the path of the definition of models")
 	rootCmd.PersistentFlags().BoolP("genImportFields", "i", false, "whether generate import fields")
 }
 
