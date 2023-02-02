@@ -10,10 +10,10 @@ A Model Instance Factory Code Generation Tool For Ent Go.
 ## Function
 Simplify the process of creating mock model objects for ent schemas. 
 - Auto reading the struct of ent model schemas to create factory functions.
-  - Support build-in type and imported type field
-  - PS: it will generate the imported type fields in default
+  - Support build-in type and imported type field.
+  - PS: it will generate the imported type fields in default.
 - Auto fake data for each field as default.
-- Allow self define the value of any field independently.
+- Allow self define the value of any field independently by using function optional pattern.
 
 ## Todo
 - [ ] Unit Test Coverage
