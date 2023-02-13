@@ -20,6 +20,7 @@ Simplify the process of creating mock model objects for ent schemas.
 - [ ] Version Compatibility Test
 - [ ] Code Lint Fix [WIP]
 - [ ] A CI config for self generating in CI/CD
+- [ ] Read Foreign Key, Support Post Create Related Instance
 - [X] ~~Provide Setter For No ReadOnly Imported Fields~~
 - [X] ~~Better Format~~
   - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
