@@ -17,4 +17,5 @@ var (
 		"enttest", "hook", "migrate", "partnerregister", "predicate", "runtime",
 		"schema",
 	} // schema is the old version(0.10.X) ent generated
+	IgnoreField = "ID"
 )

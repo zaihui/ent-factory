@@ -538,60 +538,71 @@ func withFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fn
 		// Now that we're operating on non-imported types and non-embedded
 		// fields, let's look at each actual field name and generate a setter
 		// for it.
-		for _, fieldName := range field.Names {
-			if _, ok := skipStructFields[fieldName.Name]; ok {
-				continue
-			}
-
-			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
-				continue
-			}
-			outerParamIdent := ast.NewIdent(pkg.WithFirstCharLower(fieldName.Name) + "Gen")
-			functionName := "Set" + pkg.WithFirstCharUpper(fieldName.Name)
-			newFunc := &ast.FuncDecl{
-				Doc: &ast.CommentGroup{List: []*ast.Comment{
-					{
-						Text: fmt.Sprintf("// %s Function Optional func for %s.",
-							functionName, pkg.WithFirstCharUpper(fieldName.Name)),
-					},
-				}},
-				Name: ast.NewIdent(functionName),
-				Type: &ast.FuncType{
-					Params: &ast.FieldList{
-						List: []*ast.Field{
-							{
-								Names: []*ast.Ident{outerParamIdent},
-								Type:  field.Type,
-							},
-						},
-					},
-					Results: &ast.FieldList{
-						List: []*ast.Field{{Type: fnIdent}},
-					},
-				},
-				Body: &ast.BlockStmt{
-					List: []ast.Stmt{
-						&ast.ReturnStmt{
-							Results: []ast.Expr{
-								getInnerFn(
-									structType.Name,
-									fieldName,
-									outerParamIdent,
-									fnParamType,
-								),
-							},
-						},
-					},
-				},
-			}
-			astOut.Decls = append(astOut.Decls, newFunc)
-			numFnsAdded++
-		}
+		numFnsAdded = GenerateWithFunc(astOut, structType, fnIdent, fnParamType, generateForUnexportedFields, field,
+			skipStructFields, numFnsAdded)
 	}
 	if numFnsAdded == 0 {
 		return constants.ErrNoFiled
 	}
 	return nil
+}
+
+func GenerateWithFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fnParamType *ast.StarExpr,
+	generateForUnexportedFields bool, field *ast.Field, skipStructFields map[string]struct{}, numFnsAdded int,
+) int {
+	for _, fieldName := range field.Names {
+		if _, ok := skipStructFields[fieldName.Name]; ok {
+			continue
+		}
+
+		if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
+			continue
+		}
+		if pkg.WithFirstCharUpper(fieldName.Name) == constants.IgnoreField {
+			continue
+		}
+		outerParamIdent := ast.NewIdent(pkg.WithFirstCharLower(fieldName.Name) + "Gen")
+		functionName := "Set" + pkg.WithFirstCharUpper(fieldName.Name)
+		newFunc := &ast.FuncDecl{
+			Doc: &ast.CommentGroup{List: []*ast.Comment{
+				{
+					Text: fmt.Sprintf("// %s Function Optional func for %s.",
+						functionName, pkg.WithFirstCharUpper(fieldName.Name)),
+				},
+			}},
+			Name: ast.NewIdent(functionName),
+			Type: &ast.FuncType{
+				Params: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{outerParamIdent},
+							Type:  field.Type,
+						},
+					},
+				},
+				Results: &ast.FieldList{
+					List: []*ast.Field{{Type: fnIdent}},
+				},
+			},
+			Body: &ast.BlockStmt{
+				List: []ast.Stmt{
+					&ast.ReturnStmt{
+						Results: []ast.Expr{
+							getInnerFn(
+								structType.Name,
+								fieldName,
+								outerParamIdent,
+								fnParamType,
+							),
+						},
+					},
+				},
+			},
+		}
+		astOut.Decls = append(astOut.Decls, newFunc)
+		numFnsAdded++
+	}
+	return numFnsAdded
 }
 
 // getInnerFn returns a function literal for the inner function - the one that
@@ -631,7 +642,6 @@ func getInnerFn(
 	}
 }
 
-//nolint:gocognit // fix it later
 func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generateForUnexportedFields, ignoreEmbedded,
 	genImportFields bool, skipStructFields map[string]struct{},
 ) *ast.SelectorExpr {
@@ -678,19 +688,8 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 		// fields, let's look at each actual field name and generate a setter
 		// for it.
 
-		for _, fieldName := range field.Names {
-			if _, ok := skipStructFields[fieldName.Name]; ok {
-				continue
-			}
-
-			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
-				continue
-			}
-			// set value for time do a special default
-			setterStr, valueName := getSetStrAndValueName(fieldName, fieldContainsImport, identName)
-			IndentString = IndentString + setterStr +
-				pkg.WithFirstCharUpper(fieldName.Name) + "(" + valueName + ")"
-		}
+		IndentString = GenerateSetValueFunc(field, skipStructFields, generateForUnexportedFields, fieldContainsImport,
+			identName, IndentString)
 	}
 	IndentString = "Create()" + IndentString + ".\n\tSaveX(s.Context())"
 	res := ast.SelectorExpr{
@@ -698,6 +697,28 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 		Sel: ast.NewIdent(IndentString),
 	}
 	return &res
+}
+
+func GenerateSetValueFunc(field *ast.Field, skipStructFields map[string]struct{}, generateForUnexportedFields bool,
+	fieldContainsImport bool, identName string, indentString string,
+) string {
+	for _, fieldName := range field.Names {
+		if _, ok := skipStructFields[fieldName.Name]; ok {
+			continue
+		}
+
+		if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
+			continue
+		}
+		// set value for time do a special default
+		setterStr, valueName := getSetStrAndValueName(fieldName, fieldContainsImport, identName)
+		if pkg.WithFirstCharUpper(fieldName.Name) == constants.IgnoreField {
+			continue
+		}
+		indentString = indentString + setterStr +
+			pkg.WithFirstCharUpper(fieldName.Name) + "(" + valueName + ")"
+	}
+	return indentString
 }
 
 func getSetStrAndValueName(ident *ast.Ident, fieldContainsImport bool, identName string) (string, string) {
