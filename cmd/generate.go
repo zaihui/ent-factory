@@ -546,6 +546,9 @@ func withFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fn
 			if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
 				continue
 			}
+			if pkg.WithFirstCharUpper(fieldName.Name) == constants.IgnoreField {
+				continue
+			}
 			outerParamIdent := ast.NewIdent(pkg.WithFirstCharLower(fieldName.Name) + "Gen")
 			functionName := "Set" + pkg.WithFirstCharUpper(fieldName.Name)
 			newFunc := &ast.FuncDecl{
@@ -688,6 +691,9 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 			}
 			// set value for time do a special default
 			setterStr, valueName := getSetStrAndValueName(fieldName, fieldContainsImport, identName)
+			if pkg.WithFirstCharUpper(fieldName.Name) == constants.IgnoreField {
+				continue
+			}
 			IndentString = IndentString + setterStr +
 				pkg.WithFirstCharUpper(fieldName.Name) + "(" + valueName + ")"
 		}
