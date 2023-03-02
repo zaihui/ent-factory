@@ -269,7 +269,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) 
 
 	// Add import
 	getImportDef(astOut, structType, true, flags.GenImportFields, flags.ProjectPath, flags.FactoriesPath,
-		flags.AppPath, flags.ModelPath)
+		flags.AppPath, flags.ModelPath, flags.SchemaPath)
 
 	// Add type definition for functional option function signature
 	withTypeDef(astOut, fnTypeIdent, fnParamType)
@@ -725,7 +725,7 @@ func getSetStrAndValueName(ident *ast.Ident, fieldContainsImport bool, identName
 
 //nolint:gocognit // refactor later
 func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, genImported bool, projectPath,
-	factoriesPath, appPath, modelPath string,
+	factoriesPath, appPath, modelPath, schemaPath string,
 ) {
 	structTypeTyped, ok := structType.Type.(*ast.StructType)
 	if !ok {
@@ -784,7 +784,7 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, ge
 		&ast.ImportSpec{
 			Path: &ast.BasicLit{
 				Kind:  token.STRING,
-				Value: strconv.Quote(fmt.Sprintf("%s/gen/entschema", projectPath)),
+				Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, schemaPath)),
 			},
 		},
 		&ast.ImportSpec{
