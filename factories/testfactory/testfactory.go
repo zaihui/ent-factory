@@ -12,13 +12,6 @@ import (
 
 type TestFieldSetter func(*entschema.Test)
 
-// SetID Function Optional func for ID.
-func SetID(iDGen int) TestFieldSetter {
-	return func(testGen *entschema.Test) {
-		testGen.ID = iDGen
-	}
-}
-
 // SetUID Function Optional func for UID.
 func SetUID(uIDGen string) TestFieldSetter {
 	return func(testGen *entschema.Test) {
@@ -237,7 +230,6 @@ func New(s factories.TestSuite, opts ...TestFieldSetter) *entschema.Test {
 		opt(&data)
 	}
 	return app.EntClient.Test.Create().
-		SetID(data.ID).
 		SetUID(data.UID).
 		SetCreatedAt(time.Now()).
 		SetUpdatedAt(time.Now()).
