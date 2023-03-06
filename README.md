@@ -23,18 +23,18 @@ Simplify the process of creating mock model objects for ent schemas.
 - [ ] A CI config for self generating in CI/CD
 - [ ] Read Foreign Key, Support Post Create Related Instance
 - [X] Code Lint Fix From C to B
-- [X] ~~Provide Setter For No ReadOnly Imported Fields~~
-- [X] ~~Better Format~~
-  - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
-  - [X] ~~Import Sort by fmt rules. (Fix by exec.Command)~~
-- [X] ~~Add documents for each function~~
-- [X] ~~Generate imported fields have a switch to control~~
-- [X] ~~Auto Format Code~~
-- [X] ~~Support Time Optional Function~~
-- [X] ~~Support Json Field Optional Function~~
-- [X] ~~Code Lint~~
-- [X] ~~CI Add Auto Lint~~
-- [X] ~~Option param to control overwrite exist factory or not~~
+- [X] Provide Setter For No ReadOnly Imported Fields
+- [X] Better Format
+  - [X] Add A Blank Space Between With Functions. Fixed by adding doc for each function.
+  - [X] Import Sort by fmt rules. (Fix by exec.Command)
+- [X] Add documents for each function
+- [X] Generate imported fields have a switch to control
+- [X] Auto Format Code
+- [X] Support Time Optional Function
+- [X] Support Json Field Optional Function
+- [X] Add Code Lint
+- [X] CI Add Auto Lint
+- [X] Option param to control overwrite exist factory or not
 
 ## Struct
 ```
