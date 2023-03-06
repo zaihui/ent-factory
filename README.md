@@ -19,7 +19,7 @@ Simplify the process of creating mock model objects for ent schemas.
 ## Todo
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
-- [ ] Code Lint Fix From B to A
+- [ ] Improve Code Maintainability From B to A
 - [ ] A CI config for self generating in CI/CD
 - [ ] Read Foreign Key, Support Post Create Related Instance
 - [X] Code Lint Fix From C to B
