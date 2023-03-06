@@ -14,13 +14,15 @@ Simplify the process of creating mock model objects for ent schemas.
   - PS: it will generate the imported type fields in default.
 - Auto fake data for each field as default.
 - Allow self define the value of any field independently by using function optional pattern.
+- The ID field of table cannot be edited by default, so the with function and setter will not generated for the ID field.
 
 ## Todo
 - [ ] Unit Test Coverage
 - [ ] Version Compatibility Test
-- [ ] Code Lint Fix [WIP]
+- [ ] Code Lint Fix From B to A
 - [ ] A CI config for self generating in CI/CD
 - [ ] Read Foreign Key, Support Post Create Related Instance
+- [X] Code Lint Fix From C to B
 - [X] ~~Provide Setter For No ReadOnly Imported Fields~~
 - [X] ~~Better Format~~
   - [X] ~~Add A Blank Space Between With Functions. Fixed by adding doc for each function~~.
