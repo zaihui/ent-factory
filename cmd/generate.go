@@ -45,7 +45,7 @@ type GenFlags struct {
 	GenImportFields bool
 }
 
-//nolint:cyclop // fix it later
+//nolint:cyclop // fix it later, this is only for lint test
 func GenerateFactories(cmd *cobra.Command, _ []string) {
 	flags := ExtraFlags(cmd)
 	f, err := os.Open(flags.SchemaPath)
