@@ -2,14 +2,13 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  clean:
-    - name: Clean GOPATH
-      run: |
-        rm -rf $GOPATH/pkg/mod
   ci:
     name: ci
     runs-on: ubuntu-latest
     steps:
+      - name: Clen
+        run: |
+          rm -rf $GOPATH/pkg/mod
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:
