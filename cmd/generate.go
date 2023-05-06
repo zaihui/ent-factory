@@ -20,6 +20,7 @@ import (
 	"github.com/zaihui/ent-factory/pkg"
 
 	"github.com/spf13/cobra"
+
 	"github.com/zaihui/ent-factory/constants"
 )
 
@@ -45,7 +46,7 @@ type GenFlags struct {
 	GenImportFields bool
 }
 
-//nolint:cyclop // fix it later
+// GenerateFactories generates factory files for a given schema.
 func GenerateFactories(cmd *cobra.Command, _ []string) {
 	flags := ExtraFlags(cmd)
 	f, err := os.Open(flags.SchemaPath)
@@ -54,48 +55,68 @@ func GenerateFactories(cmd *cobra.Command, _ []string) {
 	}
 	defer f.Close()
 
+	createCommonPathIfNeeded(flags)
+
+	if isSingleFile(flags) {
+		GenerateFactoryForOneFile(flags)
+		return
+	}
+
+	processSchemaDirectory(flags, f)
+}
+
+func createCommonPathIfNeeded(flags GenFlags) {
 	commonPath := fmt.Sprintf("%s/common.go", flags.OutputPath)
-	_, err = os.Stat(commonPath)
+	_, err := os.Stat(commonPath)
 	if err != nil && os.IsNotExist(err) {
 		CreatePathAndCommonFile(commonPath, flags.OutputPath)
 	} else if err != nil {
 		fail(err.Error())
 	}
-	if flags.SchemaFile != "" && flags.SchemaPath == "" {
-		GenerateFactoryForOneFile(flags)
-		return
-	}
+}
+
+func isSingleFile(flags GenFlags) bool {
+	return flags.SchemaFile != "" && flags.SchemaPath == ""
+}
+
+func processSchemaDirectory(flags GenFlags, f *os.File) {
 	files, err := f.Readdir(0)
 	if err != nil {
 		fail(err.Error())
 	}
 	for _, v := range files {
-		if !v.IsDir() {
+		if !v.IsDir() || shouldBeIgnored(v) {
 			continue
 		}
-		isContinue := false
-		for _, n := range constants.IgnoreFolderNames {
-			if v.Name() == n {
-				isContinue = true
-			}
-		}
-		if isContinue {
-			continue
-		}
+
 		realPath, realOutPutPath := GetRealPathAndFilePath(flags.SchemaPath, v, flags.OutputPath)
+
 		if !flags.Overwrite {
-			_, err := os.Stat(realOutPutPath)
-			switch {
-			case err == nil:
-				continue
-			case os.IsNotExist(err):
-				CreateOneFactory(realPath, v.Name(), realOutPutPath, flags)
-			default:
-				fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
-			}
+			checkAndCreateFactory(flags, realPath, v.Name(), realOutPutPath)
 		} else {
 			CreateOneFactory(realPath, v.Name(), realOutPutPath, flags)
 		}
+	}
+}
+
+func shouldBeIgnored(file os.FileInfo) bool {
+	for _, n := range constants.IgnoreFolderNames {
+		if file.Name() == n {
+			return true
+		}
+	}
+	return false
+}
+
+func checkAndCreateFactory(flags GenFlags, realPath, dirName, realOutPutPath string) {
+	_, err := os.Stat(realOutPutPath)
+	switch {
+	case err == nil:
+		return
+	case os.IsNotExist(err):
+		CreateOneFactory(realPath, dirName, realOutPutPath, flags)
+	default:
+		fail(fmt.Sprintf("Error occurred while checking file existence: %s", realOutPutPath))
 	}
 }
 
@@ -516,9 +537,8 @@ func withFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fn
 		if len(field.Names) == 0 {
 			if ignoreEmbedded {
 				continue
-			} else {
-				return constants.ErrDisableAllowed
 			}
+			return constants.ErrDisableAllowed
 		}
 		// No fields whose type is imported from another package
 		var fieldContainsImport bool
@@ -656,9 +676,8 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 		if len(field.Names) == 0 {
 			if ignoreEmbedded {
 				continue
-			} else {
-				panic("embedded fields disallowed")
 			}
+			panic("embedded fields disallowed")
 		}
 
 		// No fields whose type is imported from another package
@@ -758,9 +777,8 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, ge
 		if len(field.Names) == 0 {
 			if ignoreEmbedded {
 				continue
-			} else {
-				fail(constants.ErrDisableAllowed.Error())
 			}
+			fail(constants.ErrDisableAllowed.Error())
 		}
 		var fieldContainsImport bool
 		ast.Inspect(field, func(n ast.Node) bool {
