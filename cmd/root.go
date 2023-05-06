@@ -45,6 +45,7 @@ func init() {
 }
 
 func Fatal(msg string) {
+	log.Println(msg)
 	os.Exit(1)
 }
 
