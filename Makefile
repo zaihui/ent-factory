@@ -32,3 +32,7 @@ self_test:
 	./ent-factory generate --schemaPath gen/entschema  --outputPath factories --projectPath github.com/zaihui/ent-factory --overwrite=true --genImportFields=true
 	rm ent-factory
 
+
+all_factory:
+	@go install github.com/zaihui/ent-factory@latest
+	ent-factory generate --schemaPath gen/entschema --outputPath factories  --projectPath github.com/zaihui/ent-factory --factoriesPath factories

@@ -1,0 +1,37 @@
+auto build:
+  image: {your golang image address}
+  tags:
+    - docker-socket
+  only:
+    - dev
+  before_script:
+    - mkdir -p ~/.ssh && echo "StrictHostKeyChecking no" > ~/.ssh/config
+    - echo "${SSH_KEY}" > ~/.ssh/id_rsa && chmod 700 ~/.ssh && chmod 600 ~/.ssh/*
+    - git config --global user.email "your email"
+    - git config --global user.name "your bot name"
+    - git remote set-url origin git@{your gitlab server address}:${PROJECT}.git
+    - git fetch
+    - git checkout dev
+  script:
+    - >
+      if [[ -z "$(git log -1 | grep -q "(.*mi.*)")" ]];
+      then
+        echo "mi exists"
+      else
+        echo "mi does not exist"
+        exit 0
+      fi
+    - >
+      if [[ -z "$(git diff HEAD^ -- spec/schema)" ]];
+      then
+        echo "no change"
+        exit 0
+      fi
+    - # generate ent codegen, detail see the command in  Makefile
+    - make migrations
+    - # generate factory files based on the new ent code
+    - make all_factory
+    - git add .
+    - >
+      git commit -m "DEV-41(build): auto gen ent" || true
+    - git push
