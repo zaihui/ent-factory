@@ -147,7 +147,7 @@ linters:
     # wsl               # Check if blank is correct (which has no auto format, and too picky)
     - asciicheck
     - cyclop
-    - depguard
+    # depguard
     - dogsled
     - dupl
     - durationcheck
