@@ -46,6 +46,13 @@ type GenFlags struct {
 	GenImportFields bool
 }
 
+type SetValueParam struct {
+	generateForUnexportedFields bool
+	fieldContainsImport         bool
+	identName                   string
+	indentString                string
+}
+
 // GenerateFactories generates factory files for a given schema.
 func GenerateFactories(cmd *cobra.Command, _ []string) {
 	flags := ExtraFlags(cmd)
@@ -261,6 +268,7 @@ func fail(msg string) {
 }
 
 // RunGenerate ===== generate one factory schema =======.
+// todo 57 lines of code (exceeds 50 allowed).
 func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) (io.Reader, error) {
 	// Read input file
 	fset := token.NewFileSet()
@@ -334,7 +342,7 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) 
 	return res, nil
 }
 
-// NewFunc Create the New instance function.
+// NewFunc Create the New instance function. todo 85 lines of code (exceeds 50 allowed).
 func NewFunc(astOut *ast.File, paramTypeName string, structType *ast.TypeSpec, fnIdent *ast.Ident,
 	fnParamType *ast.StarExpr, generateForUnexportedFields, ignoreUnsupported bool,
 	skipStructFields map[string]struct{}, entClient string, genImportFields bool,
@@ -702,13 +710,13 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 				continue
 			}
 		}
-
-		// Now that we're operating on non-imported types and non-embedded
-		// fields, let's look at each actual field name and generate a setter
-		// for it.
-
-		IndentString = GenerateSetValueFunc(field, skipStructFields, generateForUnexportedFields, fieldContainsImport,
-			identName, IndentString)
+		setValueParam := SetValueParam{
+			generateForUnexportedFields: generateForUnexportedFields,
+			fieldContainsImport:         fieldContainsImport,
+			identName:                   identName,
+			indentString:                IndentString,
+		}
+		IndentString = GenerateSetValueFunc(field, skipStructFields, setValueParam)
 	}
 	IndentString = "Create()" + IndentString + ".\n\tSaveX(s.Context())"
 	res := ast.SelectorExpr{
@@ -718,19 +726,19 @@ func getFactoryReturn(returnIndent *ast.Ident, structType *ast.TypeSpec, generat
 	return &res
 }
 
-func GenerateSetValueFunc(field *ast.Field, skipStructFields map[string]struct{}, generateForUnexportedFields bool,
-	fieldContainsImport bool, identName string, indentString string,
-) string {
+func GenerateSetValueFunc(field *ast.Field, skipStructFields map[string]struct{}, setValueParam SetValueParam) string {
+	identName := setValueParam.identName
+	indentString := setValueParam.indentString
 	for _, fieldName := range field.Names {
 		if _, ok := skipStructFields[fieldName.Name]; ok {
 			continue
 		}
 
-		if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
+		if unicode.IsLower(rune(fieldName.Name[0])) && !setValueParam.generateForUnexportedFields {
 			continue
 		}
 		// set value for time do a special default
-		setterStr, valueName := getSetStrAndValueName(fieldName, fieldContainsImport, identName)
+		setterStr, valueName := getSetStrAndValueName(fieldName, setValueParam.fieldContainsImport, identName)
 		if pkg.WithFirstCharUpper(fieldName.Name) == constants.IgnoreField {
 			continue
 		}
@@ -763,7 +771,9 @@ func getSetStrAndValueName(ident *ast.Ident, fieldContainsImport bool, identName
 	return setStr, valueName
 }
 
-//nolint:gocognit // refactor later
+// todo Cognitive Complexity of 32 (exceeds 20 allowed).
+//
+//nolint:gocognit // refactor later, todo 93 lines of code (exceeds 50 allowed).
 func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, genImported bool, projectPath,
 	factoriesPath, appPath, modelPath, schemaPath string,
 ) {
