@@ -771,9 +771,6 @@ func getSetStrAndValueName(ident *ast.Ident, fieldContainsImport bool, identName
 	return setStr, valueName
 }
 
-// todo Cognitive Complexity of 32 (exceeds 20 allowed).
-//
-//nolint:gocognit // refactor later, todo 93 lines of code (exceeds 50 allowed).
 func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, genImported bool, projectPath,
 	factoriesPath, appPath, modelPath, schemaPath string,
 ) {
@@ -782,6 +779,46 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, ge
 		panic("bad type for struct type")
 	}
 	var importFields []string
+	importFields = ImportFieldFunc(structTypeTyped, ignoreEmbedded, genImported, importFields)
+	projectImportSpecs := make([]ast.Spec, 0)
+	if pkg.SliceContain(importFields, constants.ImportTime) {
+		spec := &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(constants.ImportTime),
+			},
+		}
+		projectImportSpecs = append(projectImportSpecs, spec)
+	}
+	secondSpecs := secondSpecsFunc(projectPath, schemaPath, appPath, factoriesPath)
+
+	projectImportSpecs = append(projectImportSpecs, secondSpecs...)
+	endPoints := strings.Split(modelPath, "/")
+	var ModelPathEndPoint string
+	if len(endPoints) == 1 {
+		ModelPathEndPoint = endPoints[0]
+	} else {
+		ModelPathEndPoint = endPoints[len(endPoints)-1]
+	}
+	if pkg.SliceContain(importFields, ModelPathEndPoint) {
+		spec := &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, modelPath)),
+			},
+		}
+		projectImportSpecs = append(projectImportSpecs, spec)
+	}
+	importDecl1 := &ast.GenDecl{
+		Tok:   token.IMPORT,
+		Specs: projectImportSpecs,
+	}
+	astOut.Decls = append([]ast.Decl{importDecl1}, astOut.Decls...)
+}
+
+func ImportFieldFunc(
+	structTypeTyped *ast.StructType, ignoreEmbedded bool, genImported bool, importFields []string,
+) []string {
 	for _, field := range structTypeTyped.Fields.List {
 		// No embedded fields
 		if len(field.Names) == 0 {
@@ -813,16 +850,10 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, ge
 			}
 		}
 	}
-	projectImportSpecs := make([]ast.Spec, 0)
-	if pkg.SliceContain(importFields, constants.ImportTime) {
-		spec := &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: strconv.Quote(constants.ImportTime),
-			},
-		}
-		projectImportSpecs = append(projectImportSpecs, spec)
-	}
+	return importFields
+}
+
+func secondSpecsFunc(projectPath string, schemaPath string, appPath string, factoriesPath string) []ast.Spec {
 	secondSpecs := []ast.Spec{
 		&ast.ImportSpec{
 			Path: &ast.BasicLit{
@@ -849,27 +880,5 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, ge
 			},
 		},
 	}
-
-	projectImportSpecs = append(projectImportSpecs, secondSpecs...)
-	endPoints := strings.Split(modelPath, "/")
-	var ModelPathEndPoint string
-	if len(endPoints) == 1 {
-		ModelPathEndPoint = endPoints[0]
-	} else {
-		ModelPathEndPoint = endPoints[len(endPoints)-1]
-	}
-	if pkg.SliceContain(importFields, ModelPathEndPoint) {
-		spec := &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: strconv.Quote(fmt.Sprintf("%s/%s", projectPath, modelPath)),
-			},
-		}
-		projectImportSpecs = append(projectImportSpecs, spec)
-	}
-	importDecl1 := &ast.GenDecl{
-		Tok:   token.IMPORT,
-		Specs: projectImportSpecs,
-	}
-	astOut.Decls = append([]ast.Decl{importDecl1}, astOut.Decls...)
+	return secondSpecs
 }
