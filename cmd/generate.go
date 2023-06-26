@@ -600,12 +600,7 @@ func GenerateWithFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.I
 				List: []ast.Stmt{
 					&ast.ReturnStmt{
 						Results: []ast.Expr{
-							getInnerFn(
-								structType.Name,
-								fieldName,
-								outerParamIdent,
-								fnParamType,
-							),
+							getInnerFn(structType.Name, fieldName, outerParamIdent, fnParamType),
 						},
 					},
 				},
