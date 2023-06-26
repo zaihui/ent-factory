@@ -304,29 +304,13 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) 
 	withTypeDef(astOut, fnTypeIdent, fnParamType)
 
 	// Add function for each applicable struct field
-	if err := withFunc(
-		astOut,
-		structType,
-		fnTypeIdent,
-		fnParamType,
-		false,
-		true,
-		flags.GenImportFields,
+	if err := withFunc(astOut, structType, fnTypeIdent, fnParamType, false, true, flags.GenImportFields,
 		constants.SkipStructFields); err != nil {
 		return nil, err
 	}
 
-	if err := NewFunc(
-		astOut,
-		paramTypeName,
-		structType,
-		fnTypeIdent,
-		fnParamType,
-		false,
-		true,
-		constants.SkipStructFields,
-		flags.EntClientName,
-		flags.GenImportFields,
+	if err := NewFunc(astOut, paramTypeName, structType, fnTypeIdent, fnParamType, false, true,
+		constants.SkipStructFields, flags.EntClientName, flags.GenImportFields,
 	); err != nil {
 		return nil, err
 	}
