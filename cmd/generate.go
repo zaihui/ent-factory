@@ -304,8 +304,17 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) 
 	withTypeDef(astOut, fnTypeIdent, fnParamType)
 
 	// Add function for each applicable struct field
-	if err := withFunc(astOut, structType, fnTypeIdent, fnParamType, false, true, flags.GenImportFields,
-		constants.SkipStructFields); err != nil {
+	opts := withFuncOptions{
+		astOut:                      astOut,
+		structType:                  structType,
+		fnIdent:                     fnTypeIdent,
+		fnParamType:                 fnParamType,
+		generateForUnexportedFields: false,
+		ignoreEmbedded:              true,
+		genImportFields:             flags.GenImportFields,
+		skipStructFields:            constants.SkipStructFields,
+	}
+	if err := withFunc(opts); err != nil {
 		return nil, err
 	}
 
@@ -511,12 +520,21 @@ func funcTypeIdent(structName string, exportFnType bool) *ast.Ident {
 	return ast.NewIdent(fmt.Sprintf(nameF, casedStructName))
 }
 
+type withFuncOptions struct {
+	astOut                      *ast.File
+	structType                  *ast.TypeSpec
+	fnIdent                     *ast.Ident
+	fnParamType                 *ast.StarExpr
+	generateForUnexportedFields bool
+	ignoreEmbedded              bool
+	genImportFields             bool
+	skipStructFields            map[string]struct{}
+}
+
 // withFunc creates a functional option function for each applicable field and
 // adds it to astOut.
-func withFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fnParamType *ast.StarExpr,
-	generateForUnexportedFields, ignoreEmbedded, genImportFields bool, skipStructFields map[string]struct{},
-) error {
-	structTypeTyped, ok := structType.Type.(*ast.StructType)
+func withFunc(opts withFuncOptions) error {
+	structTypeTyped, ok := opts.structType.Type.(*ast.StructType)
 	if !ok {
 		panic("bad type for struct type")
 	}
@@ -527,7 +545,7 @@ func withFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fn
 	for _, field := range structTypeTyped.Fields.List {
 		// No embedded fields
 		if len(field.Names) == 0 {
-			if ignoreEmbedded {
+			if opts.ignoreEmbedded {
 				continue
 			}
 			return constants.ErrDisableAllowed
@@ -543,15 +561,23 @@ func withFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fn
 			return true
 		})
 		if fieldContainsImport {
-			if !genImportFields {
+			if !opts.genImportFields {
 				continue
 			}
 		}
 		// Now that we're operating on non-imported types and non-embedded
 		// fields, let's look at each actual field name and generate a setter
 		// for it.
-		numFnsAdded = GenerateWithFunc(astOut, structType, fnIdent, fnParamType, generateForUnexportedFields, field,
-			skipStructFields, numFnsAdded)
+		numFnsAdded = GenerateWithFunc(
+			opts.astOut,
+			opts.structType,
+			opts.fnIdent,
+			opts.fnParamType,
+			opts.generateForUnexportedFields,
+			field,
+			opts.skipStructFields,
+			numFnsAdded,
+		)
 	}
 	if numFnsAdded == 0 {
 		return constants.ErrNoFiled
