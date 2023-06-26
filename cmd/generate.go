@@ -817,9 +817,14 @@ func getImportDef(astOut *ast.File, structType *ast.TypeSpec, ignoreEmbedded, ge
 }
 
 func ImportFieldFunc(
-	structTypeTyped *ast.StructType, ignoreEmbedded bool, genImported bool, importFields []string,
+	structType *ast.StructType,
+	ignoreEmbedded bool,
+	genImported bool,
+	importFields []string,
 ) []string {
-	for _, field := range structTypeTyped.Fields.List {
+	var numImportFields int
+
+	for _, field := range structType.Fields.List {
 		// No embedded fields
 		if len(field.Names) == 0 {
 			if ignoreEmbedded {
@@ -827,30 +832,38 @@ func ImportFieldFunc(
 			}
 			fail(constants.ErrDisableAllowed.Error())
 		}
-		var fieldContainsImport bool
-		ast.Inspect(field, func(n ast.Node) bool {
-			sel, ok := n.(*ast.SelectorExpr)
-			if ok {
-				fieldContainsImport = true
-			}
-			if ok && genImported {
-				ident, ok := sel.X.(*ast.Ident)
-				if ok {
-					if !pkg.SliceContain(importFields, ident.Name) {
-						importFields = append(importFields, ident.Name)
-					}
-				}
-				return false
-			}
-			return true
-		})
-		if fieldContainsImport {
-			if !genImported {
-				continue
-			}
-		}
+
+		numImportFields += containsImportField(field, genImported, importFields)
 	}
+
+	if numImportFields == 0 || !genImported {
+		return importFields
+	}
+
 	return importFields
+}
+
+func containsImportField(field *ast.Field, genImported bool, importFields []string) int {
+	var containsImport int
+
+	ast.Inspect(field, func(n ast.Node) bool {
+		sel, ok := n.(*ast.SelectorExpr)
+		if ok {
+			containsImport = 1
+		}
+
+		if ok && genImported {
+			ident, ok := sel.X.(*ast.Ident)
+			if ok && !pkg.SliceContain(importFields, ident.Name) {
+				importFields = append(importFields, ident.Name)
+			}
+			return false
+		}
+
+		return true
+	})
+
+	return containsImport
 }
 
 func secondSpecsFunc(projectPath string, schemaPath string, appPath string, factoriesPath string) []ast.Spec {
