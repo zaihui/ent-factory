@@ -573,11 +573,12 @@ func withFunc(opts withFuncOptions) error {
 		var fieldContainsImport bool
 		ast.Inspect(field, func(n ast.Node) bool {
 			_, ok := n.(*ast.SelectorExpr)
+			resBool := true
 			if ok {
 				fieldContainsImport = true
-				return false
+				resBool = false
 			}
-			return true
+			return resBool
 		})
 		if fieldContainsImport {
 			if !opts.genImportFields {
