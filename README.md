@@ -36,6 +36,7 @@ Simplify the process of creating mock model objects for ent schemas.
 - [X] CI Add Auto Lint
 - [X] Option param to control overwrite exist factory or not
 
+
 ## Struct
 ```
 -- cmd
