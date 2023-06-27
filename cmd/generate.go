@@ -267,8 +267,20 @@ func fail(msg string) {
 	os.Exit(1)
 }
 
+type NewFuncParams struct {
+	AstOut                *ast.File
+	ParamTypeName         string
+	StructType            *ast.TypeSpec
+	FnIdent               *ast.Ident
+	FnParamType           *ast.StarExpr
+	GenerateForUnexported bool
+	IgnoreUnsupported     bool
+	SkipStructFields      map[string]struct{}
+	EntClient             string
+	GenImportFields       bool
+}
+
 // RunGenerate ===== generate one factory schema =======.
-// todo 57 lines of code (exceeds 50 allowed).
 func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) (io.Reader, error) {
 	// Read input file
 	fset := token.NewFileSet()
@@ -317,10 +329,20 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) 
 	if err := withFunc(opts); err != nil {
 		return nil, err
 	}
+	params := NewFuncParams{
+		AstOut:                astOut,
+		ParamTypeName:         paramTypeName,
+		StructType:            structType,
+		FnIdent:               fnTypeIdent,
+		FnParamType:           fnParamType,
+		GenerateForUnexported: false,
+		IgnoreUnsupported:     true,
+		SkipStructFields:      constants.SkipStructFields,
+		EntClient:             flags.EntClientName,
+		GenImportFields:       flags.GenImportFields,
+	}
 
-	if err := NewFunc(astOut, paramTypeName, structType, fnTypeIdent, fnParamType, false, true,
-		constants.SkipStructFields, flags.EntClientName, flags.GenImportFields,
-	); err != nil {
+	if err := NewFunc(params); err != nil {
 		return nil, err
 	}
 	// Generate output file
@@ -336,18 +358,15 @@ func RunGenerate(schemaFile, schemaTypeName, outputPath string, flags GenFlags) 
 }
 
 // NewFunc Create the New instance function. todo 85 lines of code (exceeds 50 allowed).
-func NewFunc(astOut *ast.File, paramTypeName string, structType *ast.TypeSpec, fnIdent *ast.Ident,
-	fnParamType *ast.StarExpr, generateForUnexportedFields, ignoreUnsupported bool,
-	skipStructFields map[string]struct{}, entClient string, genImportFields bool,
-) error {
+func NewFunc(params NewFuncParams) error {
 	suiteIndent, suiteNoErrIndent, optsIndent, testCaseIndent, EllipsisIndent, returnIndent, dataIndent, optKeyIndent,
-		optValueIndent, fakerIndent, dataResIndent, dataResPosIndent := CreateIndentForNewFunc(fnIdent, entClient,
-		structType, paramTypeName)
+		optValueIndent, fakerIndent, dataResIndent, dataResPosIndent := CreateIndentForNewFunc(params.FnIdent,
+		params.EntClient, params.StructType, params.ParamTypeName)
 	newFunc := &ast.FuncDecl{
 		Doc: &ast.CommentGroup{List: []*ast.Comment{
 			{
 				Text: fmt.Sprintf("// %s function for creating one %s instance.",
-					constants.FactoryNewFuncName, structType.Name),
+					constants.FactoryNewFuncName, params.StructType.Name),
 			},
 		}},
 		Name: ast.NewIdent(constants.FactoryNewFuncName),
@@ -365,7 +384,7 @@ func NewFunc(astOut *ast.File, paramTypeName string, structType *ast.TypeSpec, f
 				},
 			},
 			Results: &ast.FieldList{
-				List: []*ast.Field{{Type: fnParamType}},
+				List: []*ast.Field{{Type: params.FnParamType}},
 			},
 		},
 		Body: &ast.BlockStmt{
@@ -412,18 +431,18 @@ func NewFunc(astOut *ast.File, paramTypeName string, structType *ast.TypeSpec, f
 					Results: []ast.Expr{
 						getFactoryReturn(
 							returnIndent,
-							structType,
-							generateForUnexportedFields,
-							ignoreUnsupported,
-							genImportFields,
-							skipStructFields,
+							params.StructType,
+							params.GenerateForUnexported,
+							params.IgnoreUnsupported,
+							params.GenImportFields,
+							params.SkipStructFields,
 						),
 					},
 				},
 			},
 		},
 	}
-	astOut.Decls = append(astOut.Decls, newFunc)
+	params.AstOut.Decls = append(params.AstOut.Decls, newFunc)
 	return nil
 }
 
