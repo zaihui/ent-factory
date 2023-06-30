@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/zaihui/ent-factory)](https://goreportcard.com/report/github.com/zaihui/ent-factory)
 
 
-一个为Ent Go生成模型实例工厂代码的工具。
+一个为Ent Go生成模型实例工厂代码的工具。[中文文档](https://github.com/zaihui/ent-factory/blob/master/README-CN.md)
 
 ## 功能
 简化为ent模式创建模拟模型对象的过程。
