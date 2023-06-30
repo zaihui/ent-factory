@@ -550,6 +550,17 @@ type withFuncOptions struct {
 	skipStructFields            map[string]struct{}
 }
 
+type GenerateWithFuncParams struct {
+	AstOut                *ast.File
+	StructType            *ast.TypeSpec
+	FnIdent               *ast.Ident
+	FnParamType           *ast.StarExpr
+	GenerateForUnexported bool
+	Field                 *ast.Field
+	SkipStructFields      map[string]struct{}
+	NumFnsAdded           int
+}
+
 // withFunc creates a functional option function for each applicable field and
 // adds it to astOut.
 func withFunc(opts withFuncOptions) error {
@@ -588,16 +599,17 @@ func withFunc(opts withFuncOptions) error {
 		// Now that we're operating on non-imported types and non-embedded
 		// fields, let's look at each actual field name and generate a setter
 		// for it.
-		numFnsAdded = GenerateWithFunc(
-			opts.astOut,
-			opts.structType,
-			opts.fnIdent,
-			opts.fnParamType,
-			opts.generateForUnexportedFields,
-			field,
-			opts.skipStructFields,
-			numFnsAdded,
-		)
+		params := GenerateWithFuncParams{
+			AstOut:                opts.astOut,
+			StructType:            opts.structType,
+			FnIdent:               opts.fnIdent,
+			FnParamType:           opts.fnParamType,
+			GenerateForUnexported: opts.generateForUnexportedFields,
+			Field:                 field,
+			SkipStructFields:      opts.skipStructFields,
+			NumFnsAdded:           numFnsAdded,
+		}
+		numFnsAdded = GenerateWithFunc(params)
 	}
 	if numFnsAdded == 0 {
 		return constants.ErrNoFiled
@@ -605,15 +617,13 @@ func withFunc(opts withFuncOptions) error {
 	return nil
 }
 
-func GenerateWithFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.Ident, fnParamType *ast.StarExpr,
-	generateForUnexportedFields bool, field *ast.Field, skipStructFields map[string]struct{}, numFnsAdded int,
-) int {
-	for _, fieldName := range field.Names {
-		if _, ok := skipStructFields[fieldName.Name]; ok {
+func GenerateWithFunc(params GenerateWithFuncParams) int {
+	for _, fieldName := range params.Field.Names {
+		if _, ok := params.SkipStructFields[fieldName.Name]; ok {
 			continue
 		}
 
-		if unicode.IsLower(rune(fieldName.Name[0])) && !generateForUnexportedFields {
+		if unicode.IsLower(rune(fieldName.Name[0])) && !params.GenerateForUnexported {
 			continue
 		}
 		if pkg.WithFirstCharUpper(fieldName.Name) == constants.IgnoreField {
@@ -634,28 +644,28 @@ func GenerateWithFunc(astOut *ast.File, structType *ast.TypeSpec, fnIdent *ast.I
 					List: []*ast.Field{
 						{
 							Names: []*ast.Ident{outerParamIdent},
-							Type:  field.Type,
+							Type:  params.Field.Type,
 						},
 					},
 				},
 				Results: &ast.FieldList{
-					List: []*ast.Field{{Type: fnIdent}},
+					List: []*ast.Field{{Type: params.FnIdent}},
 				},
 			},
 			Body: &ast.BlockStmt{
 				List: []ast.Stmt{
 					&ast.ReturnStmt{
 						Results: []ast.Expr{
-							getInnerFn(structType.Name, fieldName, outerParamIdent, fnParamType),
+							getInnerFn(params.StructType.Name, fieldName, outerParamIdent, params.FnParamType),
 						},
 					},
 				},
 			},
 		}
-		astOut.Decls = append(astOut.Decls, newFunc)
-		numFnsAdded++
+		params.AstOut.Decls = append(params.AstOut.Decls, newFunc)
+		params.NumFnsAdded++
 	}
-	return numFnsAdded
+	return params.NumFnsAdded
 }
 
 // getInnerFn returns a function literal for the inner function - the one that
