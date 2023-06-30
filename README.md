@@ -5,7 +5,8 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/zaihui/ent-factory)](https://goreportcard.com/report/github.com/zaihui/ent-factory)
 
 
-A Model Instance Factory Code Generation Tool For Ent Go.
+A Model Instance Factory Code Generation Tool For Ent Go. 
+[中文文档](https://github.com/zaihui/ent-factory/blob/master/README-CN.md)
 
 ## Function
 Simplify the process of creating mock model objects for ent schemas. 
